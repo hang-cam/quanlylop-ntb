@@ -62,6 +62,7 @@
         .btn-print:hover { background: linear-gradient(135deg, #0369a1, #075985); }
         .btn-review { background: linear-gradient(135deg, var(--purple), #6d28d9); height: 42px; padding: 0 20px; font-size: 14px; box-shadow: 0 4px 10px rgba(139, 92, 246, 0.3); border-radius: 10px;}
         .btn-sync { background: linear-gradient(135deg, var(--primary-orange), var(--dark-orange)); }
+        .btn-danger { background: linear-gradient(135deg, var(--danger), #b91c1c); }
 
         /* Bảng danh sách */
         .table-container { overflow-x: auto; border-radius: 16px; border: 1px solid var(--border-color); margin-top: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);}
@@ -146,7 +147,6 @@
 <div class="header">
     <a href="index.html" class="btn-back">⬅ Quay Lại Trang Chủ</a>
     <h1>BỘ LỌC & PHÂN CÔNG NHIỆM VỤ</h1>
-    <!-- Thanh thông tin lớp đồng bộ -->
     <p>Lớp: <b id="sys-class-name">--</b> &nbsp;|&nbsp; GVCN: <b id="sys-teacher-name">--</b> &nbsp;|&nbsp; Năm học: <b id="sys-school-year">--</b></p>
     <button class="btn-logout" onclick="logout()" title="Đăng xuất khỏi hệ thống">Đăng xuất</button>
 </div>
@@ -235,7 +235,11 @@
         <div class="modal-header">
             <h2>⚙️ LỊCH SỬ CÁC CÔNG VIỆC ĐÃ GIAO</h2>
         </div>
-        <div style="max-height: 450px; overflow-y: auto; margin-top: 10px;">
+        <!-- NÚT XÓA TOÀN BỘ LỊCH SỬ -->
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+            <button class="btn btn-danger" style="padding: 8px 16px; font-size: 13px; height: auto;" onclick="clearAllTasks()">🗑️ Xóa Toàn Bộ Lịch Sử</button>
+        </div>
+        <div style="max-height: 450px; overflow-y: auto;">
             <table class="schedule-table" style="width: 100%; border-collapse: collapse;">
                 <thead>
                     <tr>
@@ -330,25 +334,18 @@
 
     function logout() { auth.signOut(); }
 
-   function saveToCloud() {
+    function saveToCloud() {
         if(!currentUser) return;
         let dataToSave = {};
-        
-        // 1. Chỉ gom các thiết lập của trang Sơ đồ (Bỏ khóa danh sách tổng)
-        const allowedKeys = ['Seating_Lop11', 'SeatingLayout_Lop11', 'DutySchedule_Lop11', 'DutyWeek_Lop11', 'DutyHistory_Lop11', 'DutyPairIndex_Lop11', 'DutyCurrentStartIndex_Lop11', 'SoDo_Config', 'AssignedTasks_Lop11'];
-        
+        const allowedKeys = ['AppConfig_Master', 'DuLieu_Lop11_Master', 'AssignedTasks_Lop11', 'Seating_Lop11', 'SeatingLayout_Lop11', 'DutySchedule_Lop11', 'DutyWeek_Lop11', 'DutyHistory_Lop11', 'DutyPairIndex_Lop11', 'DutyCurrentStartIndex_Lop11', 'SoDo_Config'];
         for (let i = 0; i < localStorage.length; i++) {
             let key = localStorage.key(i);
-            if (allowedKeys.includes(key) || key.startsWith('doc_') || key.startsWith('excel_doc_')) {
-                dataToSave[key] = localStorage.getItem(key);
-            }
+            if (allowedKeys.includes(key)) { dataToSave[key] = localStorage.getItem(key); }
         }
         
-        // 2. Ép gửi lên Đám mây bằng chuẩn từ khóa chung
         if (localStorage.getItem('AppConfig_Master')) dataToSave['AppConfig'] = localStorage.getItem('AppConfig_Master');
         if (localStorage.getItem('DuLieu_Lop11_Master')) dataToSave['StudentsData'] = localStorage.getItem('DuLieu_Lop11_Master');
 
-        // 3. XÓA SẠCH rác dữ liệu ở mây (Gây lỗi vòng lặp)
         dataToSave['AppConfig_Master'] = firebase.firestore.FieldValue.delete();
         dataToSave['DuLieu_Lop11_Master'] = firebase.firestore.FieldValue.delete();
 
@@ -361,29 +358,17 @@
             if (doc.exists) {
                 const data = doc.data();
                 
-                // 1. Ưu tiên lấy bản xịn từ index, nếu Firebase chưa dọn kịp rác thì lôi bản cũ xài tạm
                 let configToSave = data.AppConfig || data.AppConfig_Master;
                 let studentsToSave = data.StudentsData || data.DuLieu_Lop11_Master;
-                
                 if (configToSave) localStorage.setItem('AppConfig_Master', configToSave);
                 if (studentsToSave) localStorage.setItem('DuLieu_Lop11_Master', studentsToSave);
 
-                // 2. Chặn đứng vòng lặp phía dưới kéo nhầm từ khóa bị lỗi
-                delete data.AppConfig;
-                delete data.StudentsData;
-                delete data.AppConfig_Master;
-                delete data.DuLieu_Lop11_Master;
-                delete data.lastUpdated;
+                delete data.AppConfig; delete data.StudentsData;
+                delete data.AppConfig_Master; delete data.DuLieu_Lop11_Master; delete data.lastUpdated;
 
-                // 3. Khôi phục các setup Sơ đồ/Lịch trực
-                for (let key in data) {
-                    localStorage.setItem(key, data[key]);
-                }
+                for (let key in data) { localStorage.setItem(key, data[key]); }
             }
             initPageData();
-        }).catch(err => {
-            console.error("Lỗi đồng bộ mây:", err);
-            initPageData(); 
         });
     }
 
@@ -623,7 +608,7 @@
         if (checkboxes.length === 0) { alert("Vui lòng chọn ít nhất 1 học sinh để chốt phân công!"); return; }
 
         const taskName = document.getElementById('txtTaskName').value.trim();
-        if (!taskName) { alert("⚠️ Vui lòng nhập [Tên Nhiệm Vụ Đang Giao] ở bên trên để hệ thống biết bạn đang phân công hoạt động gì nhé!"); document.getElementById('txtTaskName').focus(); return; }
+        if (!taskName) { alert("⚠️ Vui lòng nhập [Tên Hoạt Động Đang Phân Công] ở bên trên để hệ thống biết bạn đang giao nhiệm vụ gì nhé!"); document.getElementById('txtTaskName').focus(); return; }
 
         if (!confirm(`Bạn có chắc chắn muốn ghi nhận hoạt động "${taskName}" vào hồ sơ của ${checkboxes.length} học sinh đang được chọn?`)) { return; }
 
@@ -759,6 +744,40 @@
             localStorage.setItem('DuLieu_Lop11_Master', JSON.stringify(masterData));
             saveToCloud(); renderTaskManager(); filterStudents(); alert("🗑️ Đã xóa hoạt động thành công!");
         }
+    }
+    
+    // HÀM MỚI: XÓA TOÀN BỘ LỊCH SỬ PHÂN CÔNG
+    function clearAllTasks() {
+        if(!confirm("⚠️ CẢNH BÁO: Hành động này sẽ XÓA SẠCH toàn bộ lịch sử phân công công việc từ trước đến nay. Các điểm thưởng/phạt liên quan đến hoạt động của TẤT CẢ học sinh cũng sẽ bị thu hồi.\n\nBạn có chắc chắn muốn dọn dẹp lịch sử?")) return;
+        
+        let assignedTasks = JSON.parse(localStorage.getItem('AssignedTasks_Lop11')) || [];
+        let masterData = JSON.parse(localStorage.getItem('DuLieu_Lop11_Master'));
+        
+        if (assignedTasks.length === 0) {
+            alert("Danh sách đã trống, không có gì để xóa!");
+            return;
+        }
+
+        let taskIds = assignedTasks.map(t => t.id);
+
+        masterData.forEach(s => {
+            if (s.logs) {
+                if (s.logs.phongtrao) {
+                    s.logs.phongtrao = s.logs.phongtrao.filter(pt => !taskIds.includes(pt.id));
+                }
+                if (s.logs.vipham) {
+                    s.logs.vipham = s.logs.vipham.filter(vp => !taskIds.some(tid => vp.id === 'VP_' + tid));
+                }
+            }
+        });
+
+        localStorage.setItem('AssignedTasks_Lop11', JSON.stringify([]));
+        localStorage.setItem('DuLieu_Lop11_Master', JSON.stringify(masterData));
+        
+        saveToCloud();
+        renderTaskManager();
+        filterStudents(); 
+        alert("🗑️ Đã dọn dẹp sạch sẽ toàn bộ lịch sử hoạt động phân công!");
     }
 
     function editTaskName(taskId) {

@@ -55,6 +55,7 @@
         .btn-danger { background: linear-gradient(135deg, var(--danger), #dc2626); }
         .btn-review { background: linear-gradient(135deg, #0ea5e9, #0284c7); box-shadow: 0 4px 10px rgba(14, 165, 233, 0.3); }
         .btn-pack { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+        .btn-custom-seat { background: linear-gradient(135deg, #ec4899, #be185d); text-decoration: none; }
 
         .class-info-panel { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; background: #f8fafc; padding: 25px; border-radius: 16px; margin-bottom: 25px; border: 1px solid var(--border-color); }
         .class-info-panel div { display: flex; flex-direction: column; gap: 8px; }
@@ -155,7 +156,8 @@
         @media print {
             body { background: white; margin: 0; padding: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;}
             body.print-duty-mode * { visibility: hidden; }
-            body.print-duty-mode #printDutyContainer, body.print-duty-mode #printDutyContainer * { visibility: visible; }
+            body.print-duty-mode #printDutyContainer,
+            body.print-duty-mode #printDutyContainer * { visibility: visible; }
             body.print-duty-mode #printDutyContainer { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
             
             .print-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-family: 'Times New Roman', serif; }
@@ -165,18 +167,24 @@
             .print-header h2 { font-size: 20pt; text-transform: uppercase; margin: 0; font-weight: bold;}
 
             body:not(.print-duty-mode) * { visibility: hidden; }
-            body:not(.print-duty-mode) #tab-sodo, body:not(.print-duty-mode) #tab-sodo * { visibility: visible; }
+            body:not(.print-duty-mode) #tab-sodo, 
+            body:not(.print-duty-mode) #tab-sodo * { visibility: visible; }
             body:not(.print-duty-mode) #tab-sodo { position: absolute; left: 0; top: 0; width: 100%; }
-            body:not(.print-duty-mode) .header, body:not(.print-duty-mode) .tabs, body:not(.print-duty-mode) .class-info-panel, body:not(.print-duty-mode) .action-bar { display: none !important; }
+            body:not(.print-duty-mode) .header, 
+            body:not(.print-duty-mode) .tabs, 
+            body:not(.print-duty-mode) .class-info-panel, 
+            body:not(.print-duty-mode) .action-bar { display: none !important; }
             body:not(.print-duty-mode) .container { max-width: 100% !important; padding: 0 !important; box-shadow: none !important; border: none !important; margin: 0 !important;}
             body:not(.print-duty-mode) .classroom-layout { border: 2px solid #000 !important; padding: 20px !important; box-shadow: none !important; border-radius: 0 !important; background: white !important;}
             body:not(.print-duty-mode) .print-only-header { display: block !important; text-align: center; margin-bottom: 20px; font-family: 'Times New Roman', serif; }
             body:not(.print-duty-mode) .print-only-header h2 { font-size: 26px; font-weight: bold; margin: 0 0 15px 0; color: #000; }
             body:not(.print-duty-mode) .print-info-row { display: flex; justify-content: space-between; font-size: 16px; margin-bottom: 8px; padding: 0 50px; color: #000; }
+            
             body:not(.print-duty-mode) .desk-item { background: #fff !important; border: 2px solid #000 !important; box-shadow: none !important; border-radius: 0 !important;}
             body:not(.print-duty-mode) .desk-label { background: #000 !important; color: #fff !important; border: 1px solid #000 !important; border-radius: 0 !important;}
             body:not(.print-duty-mode) .desk-item select.seat-select { border: 1px solid #000 !important; background: #fff !important; color: #000 !important; border-radius: 0 !important; font-size: 13px !important; padding: 5px !important;}
-            body:not(.print-duty-mode) .desk-item select.seat-select.seat-nam, body:not(.print-duty-mode) .desk-item select.seat-select.seat-nu { background-color: #fff !important; color: #000 !important; border-color: #000 !important; }
+            body:not(.print-duty-mode) .desk-item select.seat-select.seat-nam, 
+            body:not(.print-duty-mode) .desk-item select.seat-select.seat-nu { background-color: #fff !important; color: #000 !important; border-color: #000 !important; }
             select { appearance: none; -webkit-appearance: none; }
             body:not(.print-duty-mode) .group-select { border: none !important; background: transparent !important; color: #000 !important; font-size: 18px !important; }
             body:not(.print-duty-mode) .box-board { background: #eee !important; color: #000 !important; border: 2px solid #000 !important; box-shadow: none !important; border-radius: 0 !important;}
@@ -210,8 +218,10 @@
         </div>
 
         <div class="action-bar">
-            <div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                 <button class="btn btn-random" onclick="autoArrangeSeats()">🎲 Xếp Chỗ Ngẫu Nhiên</button>
+                <!-- NÚT MỚI: Xếp chỗ theo yêu cầu -->
+                <a href="xepchovui.html" class="btn btn-custom-seat">✨ Xếp Chỗ Theo Yêu Cầu</a>
                 <button class="btn btn-save" onclick="saveSeating()">💾 Lưu Sơ Đồ</button>
             </div>
             <button class="btn btn-export" onclick="window.print()">🖨️ In Sơ Đồ Lớp</button>
@@ -394,7 +404,6 @@
         if(!currentUser) return;
         let dataToSave = {};
         
-        // 1. Chỉ gom các thiết lập của trang Sơ đồ (Bỏ khóa danh sách tổng)
         const allowedKeys = ['Seating_Lop11', 'SeatingLayout_Lop11', 'DutySchedule_Lop11', 'DutyWeek_Lop11', 'DutyHistory_Lop11', 'DutyPairIndex_Lop11', 'DutyCurrentStartIndex_Lop11', 'SoDo_Config', 'AssignedTasks_Lop11'];
         
         for (let i = 0; i < localStorage.length; i++) {
@@ -404,11 +413,9 @@
             }
         }
         
-        // 2. Ép gửi lên Đám mây bằng chuẩn từ khóa chung
         if (localStorage.getItem('AppConfig_Master')) dataToSave['AppConfig'] = localStorage.getItem('AppConfig_Master');
         if (localStorage.getItem('DuLieu_Lop11_Master')) dataToSave['StudentsData'] = localStorage.getItem('DuLieu_Lop11_Master');
 
-        // 3. XÓA SẠCH rác dữ liệu ở mây (Gây lỗi vòng lặp)
         dataToSave['AppConfig_Master'] = firebase.firestore.FieldValue.delete();
         dataToSave['DuLieu_Lop11_Master'] = firebase.firestore.FieldValue.delete();
 
@@ -421,24 +428,16 @@
             if (doc.exists) {
                 const data = doc.data();
                 
-                // 1. Ưu tiên lấy bản xịn từ index, nếu Firebase chưa dọn kịp rác thì lôi bản cũ xài tạm
                 let configToSave = data.AppConfig || data.AppConfig_Master;
                 let studentsToSave = data.StudentsData || data.DuLieu_Lop11_Master;
                 
                 if (configToSave) localStorage.setItem('AppConfig_Master', configToSave);
                 if (studentsToSave) localStorage.setItem('DuLieu_Lop11_Master', studentsToSave);
 
-                // 2. Chặn đứng vòng lặp phía dưới kéo nhầm từ khóa bị lỗi
-                delete data.AppConfig;
-                delete data.StudentsData;
-                delete data.AppConfig_Master;
-                delete data.DuLieu_Lop11_Master;
-                delete data.lastUpdated;
+                delete data.AppConfig; delete data.StudentsData;
+                delete data.AppConfig_Master; delete data.DuLieu_Lop11_Master; delete data.lastUpdated;
 
-                // 3. Khôi phục các setup Sơ đồ/Lịch trực
-                for (let key in data) {
-                    localStorage.setItem(key, data[key]);
-                }
+                for (let key in data) { localStorage.setItem(key, data[key]); }
             }
             initPageData();
         }).catch(err => {
@@ -449,9 +448,7 @@
 
     function initPageData() {
         const rawData = localStorage.getItem('DuLieu_Lop11_Master');
-        if (rawData) {
-            studentsData = JSON.parse(rawData);
-        }
+        if (rawData) { studentsData = JSON.parse(rawData); }
         
         if (studentsData.length === 0) {
             document.getElementById('deskGrid').innerHTML = "<div style='grid-column: span 4; text-align:center; padding: 50px; color:#94a3b8; font-size:16px;'>Chưa có dữ liệu học sinh. Vui lòng nạp danh sách ở trang chủ.</div>";
@@ -463,9 +460,7 @@
         const savedSeating = localStorage.getItem('Seating_Lop11');
         if (savedSeating) {
             const seating = JSON.parse(savedSeating);
-            if (!seating.every(s => s === "" || parseInt(s) < studentsData.length)) {
-                localStorage.removeItem('Seating_Lop11'); 
-            }
+            if (!seating.every(s => s === "" || parseInt(s) < studentsData.length)) { localStorage.removeItem('Seating_Lop11'); }
         }
 
         const savedDuty = localStorage.getItem('DutySchedule_Lop11');
@@ -477,8 +472,7 @@
                 return true;
             });
             if (!isValid) {
-                localStorage.removeItem('DutySchedule_Lop11');
-                localStorage.removeItem('DutyHistory_Lop11');
+                localStorage.removeItem('DutySchedule_Lop11'); localStorage.removeItem('DutyHistory_Lop11');
             }
         }
 
@@ -490,7 +484,6 @@
 
         initSeatingChart(); loadSeating(); loadClassInfo(); 
         extractDeskMap(); initDailyDutyTable(); loadDuty(); checkDutyWarnings();
-        
         if (document.getElementById('tab-thongke').classList.contains('active')) renderStatistics();
     }
 
@@ -511,7 +504,6 @@
         document.getElementById('info-lop').value = appConfig.className || "";
         document.getElementById('info-gvcn').value = appConfig.teacherName || "";
         document.getElementById('info-phong').value = sodoConfig.phong || "";
-        
         document.getElementById('info-siso').value = `${studentsData.length} HS (Nam: ${maleCount} - Nữ: ${femaleCount})`;
         updatePrintHeaders();
     }
@@ -590,38 +582,63 @@
         else left.value = right.value === 'door' ? 'teacher' : 'door';
     }
 
+    // THUẬT TOÁN MỚI: Chia đều nam nữ cho 4 dãy & ưu tiên trống bàn 1
     function autoArrangeSeats() {
-        if(!confirm("Xáo trộn ngẫu nhiên và ƯU TIÊN ghép 2 học sinh cùng giới tính ngồi 1 bàn?")) return;
-        let boys = []; let girls = []; let others = [];
+        if(!confirm("Xáo trộn ngẫu nhiên, chia đều Nam/Nữ cho 4 dãy và ưu tiên trống Bàn 1?")) return;
+        
+        let boys = []; let girls = [];
         studentsData.forEach((s, idx) => {
             let gt = (s["Giới Tính"] || "").toLowerCase();
-            if(gt === 'nam') boys.push(idx); else if(gt === 'nữ' || gt === 'nu') girls.push(idx); else others.push(idx);
+            if(gt === 'nam') boys.push(idx); 
+            else girls.push(idx); 
         });
 
         const shuffle = (arr) => { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } };
-        shuffle(boys); shuffle(girls); shuffle(others);
+        shuffle(boys); shuffle(girls);
 
-        let pairs = [];
-        while(boys.length >= 2) pairs.push([boys.pop(), boys.pop()]);
-        while(girls.length >= 2) pairs.push([girls.pop(), girls.pop()]);
-        
-        let leftovers = [...boys, ...girls, ...others]; shuffle(leftovers);
-        while(leftovers.length >= 2) pairs.push([leftovers.pop(), leftovers.pop()]);
-        if(leftovers.length === 1) pairs.push([leftovers.pop(), ""]); 
+        let cols = [[], [], [], []];
+        let colIdx = 0;
+        while(boys.length > 0) { cols[colIdx].push(boys.pop()); colIdx = (colIdx + 1) % 4; }
+        while(girls.length > 0) { cols[colIdx].push(girls.pop()); colIdx = (colIdx + 1) % 4; }
 
-        shuffle(pairs); while(pairs.length < 24) pairs.unshift(["", ""]); 
+        const selects = document.querySelectorAll('.seat-select');
+        selects.forEach(sel => sel.value = "");
 
-        let arrangedIndices = []; pairs.forEach(p => { arrangedIndices.push(p[0]); arrangedIndices.push(p[1]); });
+        // Thứ tự ưu tiên r (0: Bàn 6, 1: Bàn 5, 2: Bàn 4, 3: Bàn 3, 4: Bàn 2, 5: Bàn 1)
+        const prefOrder = [4, 3, 2, 1, 0, 5]; 
 
-        const selects = [];
         for(let c=0; c<4; c++) {
-            for(let r=0; r<6; r++) {
-                let absId = c*6 + r;
-                selects.push(document.getElementById(`seat_${absId}_1`)); selects.push(document.getElementById(`seat_${absId}_2`));
+            let studentsInCol = cols[c];
+            
+            let cBoys = studentsInCol.filter(idx => { let gt = (studentsData[idx]["Giới Tính"] || "").toLowerCase(); return gt === 'nam'; });
+            let cGirls = studentsInCol.filter(idx => { let gt = (studentsData[idx]["Giới Tính"] || "").toLowerCase(); return gt !== 'nam'; });
+            
+            let pairs = [];
+            while(cBoys.length >= 2) pairs.push([cBoys.pop(), cBoys.pop()]);
+            while(cGirls.length >= 2) pairs.push([cGirls.pop(), cGirls.pop()]);
+            
+            let leftovers = [...cBoys, ...cGirls];
+            shuffle(leftovers);
+            while(leftovers.length >= 2) pairs.push([leftovers.pop(), leftovers.pop()]);
+            if(leftovers.length === 1) pairs.push([leftovers.pop(), ""]);
+            
+            shuffle(pairs); 
+
+            for(let i=0; i<pairs.length; i++) {
+                if (i >= 6) break; 
+                let r = prefOrder[i];
+                let absId = c * 6 + r;
+                let seat1 = document.getElementById(`seat_${absId}_1`);
+                let seat2 = document.getElementById(`seat_${absId}_2`);
+                
+                let pair = pairs[i];
+                if(Math.random() > 0.5) pair.reverse();
+
+                if(seat1 && pair[0] !== "") seat1.value = pair[0];
+                if(seat2 && pair[1] !== "") seat2.value = pair[1];
             }
         }
-        selects.forEach(sel => sel.value = ""); 
-        arrangedIndices.forEach((studentIdx, i) => { if(i < selects.length) selects[i].value = studentIdx; });
+
         handleSeatChange(); 
     }
 
@@ -817,7 +834,7 @@
             }
         });
 
-        if(weekData.length > 0) weekData[0].isEvaluated = true; // Mark as evaluated
+        if(weekData.length > 0) weekData[0].isEvaluated = true; 
         history[weekDate] = weekData;
         localStorage.setItem('DutyHistory_Lop11', JSON.stringify(history));
         localStorage.setItem('DuLieu_Lop11_Master', JSON.stringify(master));
