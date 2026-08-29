@@ -298,16 +298,28 @@
 
     function logout() { auth.signOut(); }
 
-    function saveToCloud() {
+  function saveToCloud() {
         if(!currentUser) return;
         let dataToSave = {};
-        const allowedKeys = ['AppConfig_Master', 'DuLieu_Lop11_Master', 'Seating_Lop11', 'SeatingLayout_Lop11', 'DutySchedule_Lop11', 'DutyWeek_Lop11', 'DutyHistory_Lop11', 'DutyPairIndex_Lop11', 'SoDo_Config', 'AssignedTasks_Lop11'];
+        
+        // 1. Chỉ gom các thiết lập của trang Sơ đồ (Bỏ khóa danh sách tổng)
+        const allowedKeys = ['Seating_Lop11', 'SeatingLayout_Lop11', 'DutySchedule_Lop11', 'DutyWeek_Lop11', 'DutyHistory_Lop11', 'DutyPairIndex_Lop11', 'DutyCurrentStartIndex_Lop11', 'SoDo_Config', 'AssignedTasks_Lop11'];
+        
         for (let i = 0; i < localStorage.length; i++) {
             let key = localStorage.key(i);
             if (allowedKeys.includes(key) || key.startsWith('doc_') || key.startsWith('excel_doc_')) {
                 dataToSave[key] = localStorage.getItem(key);
             }
         }
+        
+        // 2. Ép gửi lên Đám mây bằng chuẩn từ khóa chung
+        if (localStorage.getItem('AppConfig_Master')) dataToSave['AppConfig'] = localStorage.getItem('AppConfig_Master');
+        if (localStorage.getItem('DuLieu_Lop11_Master')) dataToSave['StudentsData'] = localStorage.getItem('DuLieu_Lop11_Master');
+
+        // 3. XÓA SẠCH rác dữ liệu ở mây (Gây lỗi vòng lặp)
+        dataToSave['AppConfig_Master'] = firebase.firestore.FieldValue.delete();
+        dataToSave['DuLieu_Lop11_Master'] = firebase.firestore.FieldValue.delete();
+
         dataToSave.lastUpdated = firebase.firestore.FieldValue.serverTimestamp();
         db.collection("quanlylop_data").doc(currentUser.uid).set(dataToSave, { merge: true }).catch(err => console.error(err));
     }
@@ -316,11 +328,30 @@
         db.collection("quanlylop_data").doc(currentUser.uid).get().then(doc => {
             if (doc.exists) {
                 const data = doc.data();
+                
+                // 1. Ưu tiên lấy bản xịn từ index, nếu Firebase chưa dọn kịp rác thì lôi bản cũ xài tạm
+                let configToSave = data.AppConfig || data.AppConfig_Master;
+                let studentsToSave = data.StudentsData || data.DuLieu_Lop11_Master;
+                
+                if (configToSave) localStorage.setItem('AppConfig_Master', configToSave);
+                if (studentsToSave) localStorage.setItem('DuLieu_Lop11_Master', studentsToSave);
+
+                // 2. Chặn đứng vòng lặp phía dưới kéo nhầm từ khóa bị lỗi
+                delete data.AppConfig;
+                delete data.StudentsData;
+                delete data.AppConfig_Master;
+                delete data.DuLieu_Lop11_Master;
+                delete data.lastUpdated;
+
+                // 3. Khôi phục các setup Sơ đồ/Lịch trực
                 for (let key in data) {
-                    if (key !== 'lastUpdated') localStorage.setItem(key, data[key]);
+                    localStorage.setItem(key, data[key]);
                 }
             }
             initPageData();
+        }).catch(err => {
+            console.error("Lỗi đồng bộ mây:", err);
+            initPageData(); 
         });
     }
 
