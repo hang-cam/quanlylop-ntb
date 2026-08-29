@@ -5,12 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sơ Đồ Lớp & Trực Nhật - GVCN Cam Bích Hằng</title>
     
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     
+    <!-- Đồng bộ toàn bộ sang Font Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <style>
@@ -56,7 +58,7 @@
         .btn-newweek { background: linear-gradient(135deg, var(--purple), #6d28d9); }
         .btn-danger { background: linear-gradient(135deg, var(--danger), #dc2626); }
         .btn-review { background: linear-gradient(135deg, #0ea5e9, #0284c7); box-shadow: 0 4px 10px rgba(14, 165, 233, 0.3); }
-        .btn-pack { background: linear-gradient(135deg, #3b82f6, #2563eb); } /* Nút Dồn Lịch */
+        .btn-pack { background: linear-gradient(135deg, #3b82f6, #2563eb); }
 
         /* THÔNG TIN CẤU HÌNH LỚP */
         .class-info-panel { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; background: #f8fafc; padding: 25px; border-radius: 16px; margin-bottom: 25px; border: 1px solid var(--border-color); }
@@ -130,7 +132,6 @@
         .warning-tags { display: flex; flex-wrap: wrap; gap: 10px; }
         .w-tag { background: white; border: 1px solid var(--danger); color: var(--danger); padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 800; display: flex; align-items: center;}
         
-        /* Nút tắt thủ công cảnh báo bù */
         .btn-dismiss-warning { border: none; background: transparent; color: inherit; font-size: 15px; font-weight: 900; margin-left: 8px; cursor: pointer; transition: 0.2s; padding: 0 4px; border-radius: 50%;}
         .btn-dismiss-warning:hover { background: rgba(239,68,68,0.1); transform: scale(1.1); }
 
@@ -153,7 +154,6 @@
         .modal-content::-webkit-scrollbar { width: 8px; }
         .modal-content::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         
-        /* Cập nhật thuộc tính nút tắt, nâng z-index chống kẹt */
         .close-btn { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: #95a5a6; border: none; background: transparent; transition: 0.2s; font-weight: bold; z-index: 9999;}
         .close-btn:hover { color: var(--danger); transform: scale(1.1); }
         
@@ -223,23 +223,24 @@
         <button class="tab-btn" onclick="switchTab('tab-thongke', this)">📊 Thống Kê Tổng Hợp</button>
     </div>
 
+    <!-- TAB 1: SƠ ĐỒ CHỖ NGỒI -->
     <div id="tab-sodo" class="tab-content active">
 
         <div class="class-info-panel">
             <div>
-                <label>Lớp</label>
+                <label>Lớp (Đồng bộ trang chủ)</label>
                 <input type="text" id="info-lop" readonly title="Cài đặt thông tin ở màn hình Trang Chủ">
             </div>
             <div>
-                <label>GVCN</label>
+                <label>GVCN (Đồng bộ trang chủ)</label>
                 <input type="text" id="info-gvcn" readonly title="Cài đặt thông tin ở màn hình Trang Chủ">
             </div>
             <div>
                 <label>Phòng học (Nhập tại đây)</label>
-                <input type="text" id="info-phong" placeholder="VD: P.302" onkeyup="saveClassInfo()">
+                <input type="text" id="info-phong" placeholder="VD: P.302" onchange="saveClassInfo()">
             </div>
             <div>
-                <label>Sỉ số</label>
+                <label>Sỉ số tự động</label>
                 <input type="text" id="info-siso" readonly title="Tự động tính từ danh sách Excel">
             </div>
         </div>
@@ -247,7 +248,7 @@
         <div class="action-bar">
             <div>
                 <button class="btn btn-random" onclick="autoArrangeSeats()">🎲 Xếp Chỗ Ngẫu Nhiên</button>
-                <button class="btn btn-save" onclick="saveSeating()">💾 Lưu</button>
+                <button class="btn btn-save" onclick="saveSeating()">💾 Lưu Sơ Đồ</button>
             </div>
             <button class="btn btn-export" onclick="window.print()">🖨️ In Sơ Đồ Lớp</button>
         </div>
@@ -283,6 +284,7 @@
         </div>
     </div>
 
+    <!-- TAB 2: TRỰC NHẬT -->
     <div id="tab-trucnhat" class="tab-content">
         
         <div id="dutyWarningBox" class="warning-box">
@@ -296,9 +298,9 @@
                     <label style="font-size:13px; font-weight:800; color:#64748b; margin-right:10px; text-transform: uppercase;">Tuần Trực:</label>
                     <input type="date" id="weekPicker" style="border:none; outline:none; background:transparent; font-family: 'Inter', sans-serif; font-weight:900; font-size: 14px; color:var(--dark-orange);" onchange="updateWeekDates()">
                 </div>
-                <button class="btn btn-save" onclick="saveDuty()">💾 Lưu</button>
+                <button class="btn btn-save" onclick="saveDuty()">💾 Lưu Lịch Trực</button>
                 <button class="btn btn-export" onclick="printDuty()">🖨️ In Lịch Tuần</button>
-                <button class="btn btn-review" onclick="openPastWeeksModal()">🕒 Đánh Giá & Xem Lại</button>
+                <button class="btn btn-review" onclick="openPastWeeksModal()">🕒 Đánh Giá & Xem Lại Lịch Cũ</button>
             </div>
             <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                 <button class="btn btn-danger" onclick="resetDutyList()">🔄 Làm Mới Danh Sách</button>
@@ -313,11 +315,11 @@
                 <thead>
                     <tr>
                         <th style="width: 120px;">Thứ / Ngày</th>
-                        <th style="width: 140px;">Tổ Trực</th>
+                        <th style="width: 140px;">Trực Tổ</th>
                         <th style="width: 90px;">Bàn</th>
                         <th style="width: 220px;">Học Sinh 1</th>
                         <th style="width: 220px;">Học Sinh 2</th>
-                        <th style="width: 250px;">Công Việc Cần Thực Hiện</th>
+                        <th style="width: 250px;">Nội Dung Nhiệm Vụ</th>
                     </tr>
                 </thead>
                 <tbody id="scheduleBody"></tbody>
@@ -325,6 +327,7 @@
         </div>
     </div>
 
+    <!-- TAB 3: THỐNG KÊ -->
     <div id="tab-thongke" class="tab-content">
         <div class="action-bar">
             <div>
@@ -362,6 +365,7 @@
     </div>
 </div>
 
+<!-- MODAL: XEM LẠI VÀ ĐÁNH GIÁ LỊCH CŨ -->
 <div id="pastWeeksModal" class="modal-overlay">
     <div class="modal-content" style="border-top-color: var(--info);">
         <button class="close-btn" onclick="closeModal('pastWeeksModal')" title="Đóng cửa sổ này">✕</button>
@@ -398,7 +402,6 @@
 <div id="printDutyContainer"></div>
 
 <script>
-    // Hàm đóng Modal an toàn ở phạm vi Toàn cục
     function closeModal(id) { 
         const el = document.getElementById(id);
         if (el) el.classList.remove('active'); 
@@ -444,10 +447,14 @@
         
         for (let i = 0; i < localStorage.length; i++) {
             let key = localStorage.key(i);
-            if (allowedKeys.includes(key) || key.startsWith('doc_') || key.startsWith('excel_doc_')) {
+            if (allowedKeys.includes(key)) {
                 dataToSave[key] = localStorage.getItem(key);
             }
         }
+        
+        if (dataToSave['AppConfig_Master']) dataToSave['AppConfig'] = dataToSave['AppConfig_Master'];
+        if (dataToSave['DuLieu_Lop11_Master']) dataToSave['StudentsData'] = dataToSave['DuLieu_Lop11_Master'];
+
         dataToSave.lastUpdated = firebase.firestore.FieldValue.serverTimestamp();
         db.collection("quanlylop_data").doc(currentUser.uid).set(dataToSave, { merge: true }).catch(err => console.error(err));
     }
@@ -456,13 +463,20 @@
         db.collection("quanlylop_data").doc(currentUser.uid).get().then(doc => {
             if (doc.exists) {
                 const data = doc.data();
+                
+                if (data.AppConfig) localStorage.setItem('AppConfig_Master', data.AppConfig);
+                if (data.StudentsData) localStorage.setItem('DuLieu_Lop11_Master', data.StudentsData);
+
                 for (let key in data) {
-                    if (key !== 'lastUpdated') {
+                    if (key !== 'lastUpdated' && key !== 'AppConfig' && key !== 'StudentsData') {
                         localStorage.setItem(key, data[key]);
                     }
                 }
             }
             initPageData();
+        }).catch(err => {
+            console.error("Lỗi đồng bộ mây:", err);
+            initPageData(); 
         });
     }
 
@@ -765,7 +779,6 @@
     }
 
     // --- CÁC HÀM XỬ LÝ ĐÁNH GIÁ (DÀNH CHO MODAL TUẦN CŨ) ---
-    // Mặc định hiển thị "Tốt" cho giao diện chấm điểm nhanh
     function getEvalHtmlPast(i, hsIndexStr, currentEval, currentTxt) {
         currentEval = (currentEval && currentEval !== 'Chưa đánh giá') ? currentEval : 'Tốt';
         let displayTxt = currentEval === 'other' ? 'block' : 'none';
@@ -914,7 +927,7 @@
             }
         });
 
-        if(weekData.length > 0) weekData[0].isEvaluated = true; // Mark as evaluated
+        if(weekData.length > 0) weekData[0].isEvaluated = true; // Đánh dấu là tuần này đã chốt điểm
 
         history[weekDate] = weekData;
         localStorage.setItem('DutyHistory_Lop11', JSON.stringify(history));
@@ -926,6 +939,7 @@
         checkDutyWarnings();
         if (document.getElementById('tab-thongke').classList.contains('active')) renderStatistics();
         
+        // Load lại modal để update nhãn [🔴 Chưa chốt] thành [🟢 Đã chốt]
         openPastWeeksModal();
         document.getElementById('pastWeekSelector').value = weekDate;
         loadPastWeek();
@@ -1240,9 +1254,9 @@
             });
 
             // Tự động Ghi nhận "Tốt" khi lưu tuần
-            let eval1 = (existingWeek[i] && existingWeek[i].hs1 === hs1) ? existingWeek[i].eval1 : "Chưa đánh giá";
+            let eval1 = (existingWeek[i] && existingWeek[i].hs1 === hs1) ? existingWeek[i].eval1 : "Tốt";
             let evalTxt1 = (existingWeek[i] && existingWeek[i].hs1 === hs1) ? existingWeek[i].evalTxt1 : "";
-            let eval2 = (existingWeek[i] && existingWeek[i].hs2 === hs2) ? existingWeek[i].eval2 : "Chưa đánh giá";
+            let eval2 = (existingWeek[i] && existingWeek[i].hs2 === hs2) ? existingWeek[i].eval2 : "Tốt";
             let evalTxt2 = (existingWeek[i] && existingWeek[i].hs2 === hs2) ? existingWeek[i].evalTxt2 : "";
 
             // Tự động gỡ phạt trực nếu lưu tuần trực mà GV set là Tốt, đồng thời tắt cảnh báo
@@ -1259,7 +1273,6 @@
                     localStorage.setItem('DuLieu_Lop11_Master', JSON.stringify(master));
                 }
                 
-                // Tự động tắt các cảnh báo kém trước đó
                 for (let w in existingHistory) {
                     existingHistory[w].forEach(day => {
                         if (day.hs1 == hs1 && day.eval1 !== 'Tốt') day.resolved1 = true;
@@ -1287,7 +1300,7 @@
         localStorage.setItem('DutyHistory_Lop11', JSON.stringify(existingHistory));
 
         saveToCloud();
-        alert("💾 Đã chốt Lịch trực tuần!");
+        alert("💾 Đã chốt Lịch trực tuần! (Cô có thể đánh giá kết quả trực trong cửa sổ 'Đánh Giá & Xem Lại Lịch Cũ')");
         checkDutyWarnings();
         if (document.getElementById('tab-thongke').classList.contains('active')) renderStatistics();
     }
@@ -1349,7 +1362,7 @@
                         <th style="width: 15%;">Tổ / Bàn</th>
                         <th style="width: 25%;">Học sinh 1</th>
                         <th style="width: 25%;">Học sinh 2</th>
-                        <th style="width: 20%;">Các Công Việc Cần Làm</th>
+                        <th style="width: 20%;">Nhiệm vụ</th>
                     </tr>
                 </thead>
                 <tbody>`;
@@ -1438,7 +1451,7 @@
     }
 
     function clearStudentWarning(studentIdx) {
-        if(!confirm(`Thầy/Cô có muốn tắt cảnh báo trực bù cho học sinh này không?\n(Hệ thống sẽ ghi nhận là thầy/cô đã xử lý nhắc nhở xong)`)) return;
+        if(!confirm(`Cô có muốn tắt cảnh báo trực bù cho học sinh này không?\n(Hệ thống sẽ ghi nhận là cô đã xử lý nhắc nhở xong)`)) return;
         
         let history = JSON.parse(localStorage.getItem('DutyHistory_Lop11')) || {};
         for (let w in history) {
