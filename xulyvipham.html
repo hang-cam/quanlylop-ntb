@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xử Lý Kỷ Luật - GVCN Cam Bích Hằng</title>
+    <title>Xử Lý Kỷ Luật - GVCN</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     
     <!-- Firebase SDKs -->
@@ -11,7 +11,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     
-    <!-- Bộ font Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <style>
@@ -38,6 +37,7 @@
         
         .header { background: linear-gradient(135deg, var(--primary-orange), var(--dark-orange)); color: white; padding: 25px 20px; text-align: center; box-shadow: 0 10px 30px rgba(234, 88, 12, 0.2); border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; margin-bottom: 40px; position: relative;}
         .header h1 { margin: 0 0 5px 0; font-weight: 900; font-size: 1.9em; text-transform: uppercase; letter-spacing: 0.5px;}
+        .header p { margin: 8px 0 0 0; font-size: 1.1em; font-weight: 600; color: var(--light-orange); display: flex; justify-content: center; align-items: center; gap: 10px;}
         
         .btn-back { position: absolute; left: 30px; top: 25px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 10px 18px; border-radius: 12px; text-decoration: none; font-weight: 700; transition: all 0.3s; display: flex; align-items: center; gap: 8px;}
         .btn-back:hover { background: white; color: var(--dark-orange); box-shadow: 0 4px 15px rgba(0,0,0,0.1);}
@@ -141,6 +141,7 @@
 <div class="header">
     <a href="index.html" class="btn-back">⬅ Quay Lại Trang Chủ</a>
     <h1>QUẢN LÝ QUY TRÌNH KỶ LUẬT</h1>
+    <p>Lớp: <b id="sys-class-name">--</b> &nbsp;|&nbsp; GVCN: <b id="sys-teacher-name">--</b> &nbsp;|&nbsp; Năm học: <b id="sys-school-year">--</b></p>
     <button class="btn-logout" onclick="logout()" title="Đăng xuất khỏi hệ thống">Đăng xuất</button>
 </div>
 
@@ -231,7 +232,6 @@
 </div>
 
 <script>
-    // --- CHÌA KHÓA FIREBASE ---
     const firebaseConfig = {
         apiKey: "AIzaSyCbA_3aOK2tOHFpWpJBnOMgcDfTHNf5pro",
         authDomain: "quanlylop-ntb.firebaseapp.com",
@@ -249,24 +249,18 @@
     let studentsData = [];
     let currentFilter = 'all';
     let currentStudentIndex = -1;
+    let appConfig = { className: "11A7", teacherName: "Cam Bích Hằng", schoolYear: "2025-2026" };
 
     const KW_TRE = ['trễ', 'muộn'];
     const KW_HOCTAP = ['thuộc bài', 'làm bài', 'học bài', 'chuẩn bị bài', 'bài tập', 'tài liệu', 'dụng cụ'];
     const KW_THI = ['hk1', 'hk2', 'ghk1', 'ghk2', 'kiểm tra'];
 
-    // --- XÁC THỰC & ĐỒNG BỘ ĐÁM MÂY ---
     auth.onAuthStateChanged(user => {
-        if (user) {
-            currentUser = user;
-            syncFromCloud();
-        } else {
-            window.location.href = 'login.html';
-        }
+        if (user) { currentUser = user; syncFromCloud(); } 
+        else { window.location.href = 'login.html'; }
     });
 
-    function logout() {
-        auth.signOut();
-    }
+    function logout() { auth.signOut(); }
 
     function saveToCloud() {
         if(!currentUser) return;
@@ -287,20 +281,28 @@
             if (doc.exists) {
                 const data = doc.data();
                 for (let key in data) {
-                    if (key !== 'lastUpdated') {
-                        localStorage.setItem(key, data[key]);
-                    }
+                    if (key !== 'lastUpdated') localStorage.setItem(key, data[key]);
                 }
             }
             initPageData();
         });
     }
 
+    function loadSystemConfig() {
+        let saved = localStorage.getItem('AppConfig_Master');
+        if(saved) {
+            try { appConfig = JSON.parse(saved); } catch(e){}
+        }
+        document.getElementById('sys-class-name').innerText = appConfig.className || "--";
+        document.getElementById('sys-teacher-name').innerText = appConfig.teacherName || "--";
+        document.getElementById('sys-school-year').innerText = appConfig.schoolYear || "--";
+    }
+
     function initPageData() {
+        loadSystemConfig();
         const rawData = localStorage.getItem('DuLieu_Lop11_Master');
         if (rawData) {
             studentsData = JSON.parse(rawData);
-            
             studentsData = studentsData.map(s => {
                 if (!s.logs) s.logs = { vipham: [], phongtrao: [], vangCoPhep: [], vangKhongPhep: [] };
                 if (!s.logs.vangCoPhep) s.logs.vangCoPhep = [];
@@ -308,58 +310,32 @@
                 if (!s.logs.xuly) s.logs.xuly = [];
                 return s;
             });
-
-            syncAutoSuggestions();
-            populateAllStudentsDropdown();
-            renderTable();
-            updateStats();
+            syncAutoSuggestions(); populateAllStudentsDropdown(); renderTable(); updateStats();
         } else {
-            alert("Vui lòng tải danh sách lớp từ file Excel ở Trang Chủ trước!");
-            window.location.href = "index.html";
+            alert("Vui lòng tải danh sách lớp từ file Excel ở Trang Chủ trước!"); window.location.href = "index.html";
         }
     }
 
     function populateAllStudentsDropdown() {
         const sel = document.getElementById('selAllStudents');
         sel.innerHTML = '<option value="">➕ Chọn HS ngoài danh sách để thêm xử lý...</option>';
-        studentsData.forEach((s, index) => {
-            sel.innerHTML += `<option value="${index}">${s["STT"] || index+1}. ${s["Họ và Tên"]}</option>`;
-        });
+        studentsData.forEach((s, index) => { sel.innerHTML += `<option value="${index}">${s["STT"] || index+1}. ${s["Họ và Tên"]}</option>`; });
     }
 
     function quickOpenModal() {
         const sel = document.getElementById('selAllStudents');
-        if (sel.value !== "") {
-            openActionModal(parseInt(sel.value));
-            sel.value = ""; 
-        }
+        if (sel.value !== "") { openActionModal(parseInt(sel.value)); sel.value = ""; }
     }
 
-    // --- ĐỘNG CƠ TỰ ĐỘNG PHÁT HIỆN LỖI ---
     function syncAutoSuggestions() {
         studentsData.forEach(s => {
-            const vpLogs = s.logs.vipham;
-            const totalAbs = s.logs.vangCoPhep.length + s.logs.vangKhongPhep.length;
-            
+            const vpLogs = s.logs.vipham; const totalAbs = s.logs.vangCoPhep.length + s.logs.vangKhongPhep.length;
             const countByKW = (kwArray) => vpLogs.filter(log => kwArray.some(kw => log.text.toLowerCase().includes(kw))).length;
-            
-            const treCount = countByKW(KW_TRE);
-            const hocCount = countByKW(KW_HOCTAP);
-            const thiCount = countByKW(KW_THI);
-
+            const treCount = countByKW(KW_TRE); const hocCount = countByKW(KW_HOCTAP); const thiCount = countByKW(KW_THI);
             const triggerAction = (code, title, reason, severity = 'normal') => {
                 const exists = s.logs.xuly.some(act => act.code === code);
                 if (!exists) {
-                    s.logs.xuly.push({
-                        id: Date.now() + Math.random(),
-                        code: code,
-                        title: title,
-                        reason: reason,
-                        severity: severity,
-                        status: 'pending',
-                        dateResolved: '',
-                        note: ''
-                    });
+                    s.logs.xuly.push({ id: Date.now() + Math.random(), code: code, title: title, reason: reason, severity: severity, status: 'pending', dateResolved: '', note: '' });
                 }
             };
 
@@ -368,33 +344,21 @@
             if (hocCount >= 2) triggerAction('HOC_2', 'Viết bản kiểm điểm', `Vi phạm quy chế học tập ${hocCount} lần`);
             if (thiCount > 0) triggerAction('THI_1', 'Mời Phụ huynh (Vi phạm thi cử)', `Vi phạm kỷ luật nặng trong giờ kiểm tra/thi (${thiCount} lần)`, 'severe');
         });
-
         localStorage.setItem('DuLieu_Lop11_Master', JSON.stringify(studentsData));
-        // Không gọi saveToCloud ở đây để tránh gọi thừa lúc load trang. Sẽ gọi ở các hàm chủ động.
     }
 
-    // --- HIỂN THỊ GIAO DIỆN ---
     function setFilter(f) {
-        currentFilter = f;
-        document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
-        event.target.classList.add('active');
-        renderTable();
+        currentFilter = f; document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active'); renderTable();
     }
 
     function updateStats() {
         let pending = 0, done = 0, totalStudentsInvolved = 0;
-
         studentsData.forEach(s => {
             if (s.logs.xuly.length > 0) totalStudentsInvolved++;
-            s.logs.xuly.forEach(act => {
-                if (act.status === 'pending') pending++;
-                else if (act.status === 'done') done++;
-            });
+            s.logs.xuly.forEach(act => { if (act.status === 'pending') pending++; else if (act.status === 'done') done++; });
         });
-
-        document.getElementById('stat-pending').innerText = pending;
-        document.getElementById('stat-done').innerText = done;
-        document.getElementById('stat-total').innerText = totalStudentsInvolved;
+        document.getElementById('stat-pending').innerText = pending; document.getElementById('stat-done').innerText = done; document.getElementById('stat-total').innerText = totalStudentsInvolved;
     }
 
     function renderTable() {
@@ -403,7 +367,6 @@
 
         studentsData.forEach((s, index) => {
             if (!s.logs.xuly || s.logs.xuly.length === 0) return; 
-
             const pendingActions = s.logs.xuly.filter(a => a.status === 'pending');
             const doneActions = s.logs.xuly.filter(a => a.status === 'done');
 
@@ -412,17 +375,11 @@
 
             let tagHTML = '';
             s.logs.xuly.forEach(act => {
-                if (act.status === 'pending') {
-                    tagHTML += `<span class="tag pending">⚠️ ${act.title}</span>`;
-                } else {
-                    if (currentFilter === 'all' || currentFilter === 'done') {
-                        tagHTML += `<span class="tag done">✔️ ${act.title}</span>`;
-                    }
-                }
+                if (act.status === 'pending') { tagHTML += `<span class="tag pending">⚠️ ${act.title}</span>`; } 
+                else { if (currentFilter === 'all' || currentFilter === 'done') tagHTML += `<span class="tag done">✔️ ${act.title}</span>`; }
             });
 
             if(tagHTML === '') return;
-
             html += `
                 <tr>
                     <td style="font-weight:900; color:var(--info-dark);">${s['STT'] || index + 1}</td>
@@ -432,50 +389,29 @@
                         - Vắng học: <b style="color:var(--text-main);">${s.logs.vangCoPhep.length + s.logs.vangKhongPhep.length}</b> buổi
                     </td>
                     <td style="text-align: left; line-height: 1.8;">${tagHTML}</td>
-                    <td>
-                        <button class="btn-process" onclick="openActionModal(${index})">⚙️ Mở Hồ Sơ</button>
-                    </td>
+                    <td><button class="btn-process" onclick="openActionModal(${index})">⚙️ Mở Hồ Sơ</button></td>
                 </tr>
             `;
         });
-
-        if (html === '') {
-            tbody.innerHTML = `<tr><td colspan="5" style="padding: 40px; color:var(--text-muted); font-style:italic; text-align:center;">Danh sách lọc trống. Vui lòng chọn [Tất cả] hoặc dùng thanh công cụ phía trên để thêm hồ sơ xử lý mới.</td></tr>`;
-        } else {
-            tbody.innerHTML = html;
-        }
+        if (html === '') tbody.innerHTML = `<tr><td colspan="5" style="padding: 40px; color:var(--text-muted); font-style:italic; text-align:center;">Danh sách lọc trống. Vui lòng chọn [Tất cả] hoặc dùng thanh công cụ phía trên để thêm hồ sơ xử lý mới.</td></tr>`;
+        else tbody.innerHTML = html;
     }
 
-    // --- MODAL XỬ LÝ ---
     function openActionModal(index) {
-        currentStudentIndex = index;
-        document.getElementById('dt-name').innerText = studentsData[index]["Họ và Tên"];
-        renderActionList();
-        document.getElementById('actionModal').classList.add('active');
+        currentStudentIndex = index; document.getElementById('dt-name').innerText = studentsData[index]["Họ và Tên"];
+        renderActionList(); document.getElementById('actionModal').classList.add('active');
     }
 
-    function closeModal() {
-        document.getElementById('actionModal').classList.remove('active');
-        currentStudentIndex = -1;
-    }
+    function closeModal() { document.getElementById('actionModal').classList.remove('active'); currentStudentIndex = -1; }
 
     function renderActionList() {
-        const s = studentsData[currentStudentIndex];
-        const container = document.getElementById('action-list');
-        
-        if (s.logs.xuly.length === 0) {
-            container.innerHTML = '<p style="color:var(--text-muted); font-style:italic; text-align:center; padding: 20px;">Học sinh này hiện chưa có vi phạm nào cần xử lý. Bạn có thể chủ động thêm yêu cầu thủ công bên dưới.</p>';
-            return;
-        }
+        const s = studentsData[currentStudentIndex]; const container = document.getElementById('action-list');
+        if (s.logs.xuly.length === 0) { container.innerHTML = '<p style="color:var(--text-muted); font-style:italic; text-align:center; padding: 20px;">Học sinh này hiện chưa có vi phạm nào cần xử lý. Bạn có thể chủ động thêm yêu cầu thủ công bên dưới.</p>'; return; }
 
         container.innerHTML = s.logs.xuly.map(act => {
             const classSeverity = act.severity === 'severe' && act.status === 'pending' ? 'action-item pending severe' : (act.status === 'pending' ? 'action-item pending' : 'action-item done');
-            
             let formattedDate = act.dateResolved;
-            if (formattedDate && formattedDate.includes('-')) {
-                const parts = formattedDate.split('-');
-                if(parts.length === 3) formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
-            }
+            if (formattedDate && formattedDate.includes('-')) { const parts = formattedDate.split('-'); if(parts.length === 3) formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`; }
 
             if (act.status === 'pending') {
                 const today = new Date().toISOString().split('T')[0];
@@ -484,152 +420,92 @@
                         <div class="action-info">
                             <h4>⚠️ Yêu cầu: ${act.title} ${act.severity === 'severe' ? '<span style="color:var(--danger); font-size:13px; padding:2px 8px; background:#fecaca; border-radius:10px; margin-left:5px;">LỖI NẶNG</span>' : ''}</h4>
                             <p>Lý do: ${act.reason}</p>
-                            <div class="action-form">
-                                <label>Ngày xong:</label>
-                                <input type="date" id="date_${act.id}" value="${today}">
-                                <input type="text" id="note_${act.id}" placeholder="Kết quả thực hiện (VD: PH cam kết...)">
-                            </div>
+                            <div class="action-form"><label>Ngày xong:</label><input type="date" id="date_${act.id}" value="${today}"><input type="text" id="note_${act.id}" placeholder="Kết quả thực hiện (VD: PH cam kết...)"></div>
                         </div>
                         <div style="display:flex; flex-direction:column; gap:8px; min-width: 120px;">
                             <button class="btn-save-action" onclick="resolveAction(${act.id})">✅ Chốt Xong</button>
                             <button class="btn-delete-action" onclick="deleteAction(${act.id})">🗑️ Xóa Bỏ</button>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             } else {
                 return `
                     <div class="action-item done">
                         <div class="action-info">
                             <h4><span class="status-text done">✔️ ĐÃ HOÀN TẤT:</span> ${act.title}</h4>
                             <p>Lý do ban đầu: ${act.reason}</p>
-                            <p style="color: var(--text-main); font-weight: 600; margin-top:8px; font-size: 14.5px;">
-                                📅 Ngày xử lý: ${formattedDate || "--"} <br>
-                                📝 Kết quả: <span style="color:var(--info-dark);">${act.note || "Không có ghi chú"}</span>
-                            </p>
+                            <p style="color: var(--text-main); font-weight: 600; margin-top:8px; font-size: 14.5px;">📅 Ngày xử lý: ${formattedDate || "--"} <br>📝 Kết quả: <span style="color:var(--info-dark);">${act.note || "Không có ghi chú"}</span></p>
                         </div>
                         <div style="display:flex; flex-direction:column; gap:8px; min-width: 120px;">
                             <button class="btn-undo-action" onclick="undoAction(${act.id})">↩️ Hoàn Tác</button>
                             <button class="btn-delete-action" onclick="deleteAction(${act.id})">🗑️ Xóa Bỏ</button>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             }
         }).join('');
     }
 
-    // --- LOGIC XỬ LÝ & THÊM XÓA ---
     function resolveAction(id) {
-        const dateVal = document.getElementById(`date_${id}`).value;
-        const noteVal = document.getElementById(`note_${id}`).value;
+        const dateVal = document.getElementById(`date_${id}`).value; const noteVal = document.getElementById(`note_${id}`).value;
         if (!dateVal) { alert("Vui lòng chọn ngày xử lý!"); return; }
-
-        const s = studentsData[currentStudentIndex];
-        const actIndex = s.logs.xuly.findIndex(a => a.id === id);
-        
-        s.logs.xuly[actIndex].status = 'done';
-        s.logs.xuly[actIndex].dateResolved = dateVal;
-        s.logs.xuly[actIndex].note = noteVal;
+        const s = studentsData[currentStudentIndex]; const actIndex = s.logs.xuly.findIndex(a => a.id === id);
+        s.logs.xuly[actIndex].status = 'done'; s.logs.xuly[actIndex].dateResolved = dateVal; s.logs.xuly[actIndex].note = noteVal;
         saveAndRefresh();
     }
 
     function undoAction(id) {
         if (!confirm("Chuyển trạng thái xử lý về mức 'Đang Chờ'?")) return;
-        const s = studentsData[currentStudentIndex];
-        const actIndex = s.logs.xuly.findIndex(a => a.id === id);
-        s.logs.xuly[actIndex].status = 'pending';
-        s.logs.xuly[actIndex].dateResolved = '';
-        s.logs.xuly[actIndex].note = '';
+        const s = studentsData[currentStudentIndex]; const actIndex = s.logs.xuly.findIndex(a => a.id === id);
+        s.logs.xuly[actIndex].status = 'pending'; s.logs.xuly[actIndex].dateResolved = ''; s.logs.xuly[actIndex].note = '';
         saveAndRefresh();
     }
 
     function deleteAction(id) {
         if (!confirm("⚠️ BẠN CÓ CHẮC CHẮN MUỐN XÓA VĨNH VIỄN HỒ SƠ NÀY?\n\nHành động này không thể hoàn tác!")) return;
-        const s = studentsData[currentStudentIndex];
-        const actIndex = s.logs.xuly.findIndex(a => a.id === id);
-        if (actIndex > -1) {
-            s.logs.xuly.splice(actIndex, 1);
-            saveAndRefresh();
-        }
+        const s = studentsData[currentStudentIndex]; const actIndex = s.logs.xuly.findIndex(a => a.id === id);
+        if (actIndex > -1) { s.logs.xuly.splice(actIndex, 1); saveAndRefresh(); }
     }
 
     function toggleManualInput() {
-        const sel = document.getElementById('selManualActionType').value;
-        const txt = document.getElementById('txtManualAction');
-        if (sel === 'other') {
-            txt.placeholder = "Nhập cả hình thức xử lý và nguyên nhân lỗi...";
-        } else {
-            txt.placeholder = "Nhập chi tiết nguyên nhân (VD: Đánh nhau, vô lễ...)";
-        }
+        const sel = document.getElementById('selManualActionType').value; const txt = document.getElementById('txtManualAction');
+        if (sel === 'other') txt.placeholder = "Nhập cả hình thức xử lý và nguyên nhân lỗi..."; else txt.placeholder = "Nhập chi tiết nguyên nhân (VD: Đánh nhau, vô lễ...)";
     }
 
     function addManualAction() {
-        const selVal = document.getElementById('selManualActionType').value;
-        let txt = document.getElementById('txtManualAction').value.trim();
+        const selVal = document.getElementById('selManualActionType').value; let txt = document.getElementById('txtManualAction').value.trim();
         let title = "", reason = "";
-
         if (selVal === 'other') {
             if (!txt) { alert("Vui lòng nhập đầy đủ hình thức xử lý và nguyên nhân!"); return; }
-            title = txt;
-            reason = "Giáo viên đánh giá và thêm thủ công";
-        } else {
-            title = selVal;
-            reason = txt ? txt : "Giáo viên đánh giá và thêm thủ công";
-        }
+            title = txt; reason = "Giáo viên đánh giá và thêm thủ công";
+        } else { title = selVal; reason = txt ? txt : "Giáo viên đánh giá và thêm thủ công"; }
 
         const s = studentsData[currentStudentIndex];
-        s.logs.xuly.push({
-            id: Date.now() + Math.random(),
-            code: 'MANUAL',
-            title: title,
-            reason: reason,
-            severity: 'normal',
-            status: 'pending',
-            dateResolved: '',
-            note: ''
-        });
-
-        document.getElementById('txtManualAction').value = '';
-        document.getElementById('selManualActionType').value = 'Viết bản kiểm điểm';
-        toggleManualInput();
-        saveAndRefresh();
+        s.logs.xuly.push({ id: Date.now() + Math.random(), code: 'MANUAL', title: title, reason: reason, severity: 'normal', status: 'pending', dateResolved: '', note: '' });
+        document.getElementById('txtManualAction').value = ''; document.getElementById('selManualActionType').value = 'Viết bản kiểm điểm';
+        toggleManualInput(); saveAndRefresh();
     }
 
     function saveAndRefresh() {
         localStorage.setItem('DuLieu_Lop11_Master', JSON.stringify(studentsData));
-        renderActionList();
-        renderTable();
-        updateStats();
-        saveToCloud(); // <-- Đồng bộ lên mây
+        renderActionList(); renderTable(); updateStats(); saveToCloud();
     }
 
-    // --- XUẤT BÁO CÁO ---
     function exportActions() {
         let exportData = [];
         studentsData.forEach(s => {
             if (!s.logs.xuly || s.logs.xuly.length === 0) return;
             s.logs.xuly.forEach(act => {
                 let formattedDate = act.dateResolved;
-                if (formattedDate && formattedDate.includes('-')) {
-                    const parts = formattedDate.split('-');
-                    if(parts.length === 3) formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
-                }
+                if (formattedDate && formattedDate.includes('-')) { const parts = formattedDate.split('-'); if(parts.length === 3) formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`; }
                 exportData.push({
-                    "Họ và Tên": s["Họ và Tên"],
-                    "Hình Thức Xử Lý": act.title,
-                    "Nguyên Nhân Kỷ Luật": act.reason,
-                    "Trạng Thái": act.status === 'done' ? "Đã Xử Lý Xong" : "Đang Chờ Xử Lý",
-                    "Ngày Hoàn Tất": act.status === 'done' ? formattedDate : "",
-                    "Kết Quả / Ghi Chú": act.note || ""
+                    "Họ và Tên": s["Họ và Tên"], "Hình Thức Xử Lý": act.title, "Nguyên Nhân Kỷ Luật": act.reason,
+                    "Trạng Thái": act.status === 'done' ? "Đã Xử Lý Xong" : "Đang Chờ Xử Lý", "Ngày Hoàn Tất": act.status === 'done' ? formattedDate : "", "Kết Quả / Ghi Chú": act.note || ""
                 });
             });
         });
 
         if (exportData.length === 0) { alert("Chưa có hồ sơ xử lý kỷ luật nào để xuất!"); return; }
-
-        const ws = XLSX.utils.json_to_sheet(exportData);
-        ws['!cols'] = [{wch: 25}, {wch: 30}, {wch: 40}, {wch: 18}, {wch: 18}, {wch: 40}];
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "TienTrinhKyLuat");
+        const ws = XLSX.utils.json_to_sheet(exportData); ws['!cols'] = [{wch: 25}, {wch: 30}, {wch: 40}, {wch: 18}, {wch: 18}, {wch: 40}];
+        const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "TienTrinhKyLuat");
         const nowStr = new Date().toLocaleDateString('vi-VN').replace(/\//g, "-");
         XLSX.writeFile(wb, `Theo_Doi_Ky_Luat_Lop_${nowStr}.xlsx`);
     }
