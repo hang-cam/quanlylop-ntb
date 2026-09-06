@@ -1,0 +1,333 @@
+import React, { useState, useMemo } from 'react';
+import { 
+  AlertTriangle, 
+  BookOpen, 
+  CalendarX2, 
+  Award, 
+  Activity, 
+  Plus, 
+  Minus,
+  Calculator,
+  ShieldCheck,
+  Info
+} from 'lucide-react';
+
+const NumberInput = ({ label, description, value, onChange, icon: Icon, colorTheme, max = 99 }) => {
+  const handleDecrement = () => onChange(Math.max(0, value - 1));
+  const handleIncrement = () => onChange(Math.min(max, value + 1));
+
+  const themeColors = {
+    red: "text-red-600 bg-red-50 border-red-200 hover:bg-red-100",
+    blue: "text-blue-600 bg-blue-50 border-blue-200 hover:bg-blue-100",
+    green: "text-green-600 bg-green-50 border-green-200 hover:bg-green-100",
+    orange: "text-orange-600 bg-orange-50 border-orange-200 hover:bg-orange-100",
+  };
+
+  return (
+    <div className="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex items-start gap-3">
+        {Icon && (
+          <div className={`p-2 rounded-lg mt-0.5 ${themeColors[colorTheme].split(' ').slice(1).join(' ')}`}>
+            <Icon size={18} className={themeColors[colorTheme].split(' ')[0]} />
+          </div>
+        )}
+        <div>
+          <h4 className="font-semibold text-gray-800">{label}</h4>
+          {description && <p className="text-xs text-gray-500 mt-1">{description}</p>}
+        </div>
+      </div>
+      <div className="flex items-center gap-2 bg-gray-50 p-1.5 rounded-lg border border-gray-200">
+        <button 
+          onClick={handleDecrement}
+          className="w-8 h-8 flex items-center justify-center bg-white border border-gray-200 rounded-md text-gray-600 hover:text-red-600 hover:bg-red-50 transition-colors shadow-sm"
+        >
+          <Minus size={16} />
+        </button>
+        <span className="w-8 text-center font-bold text-gray-800 tabular-nums">{value}</span>
+        <button 
+          onClick={handleIncrement}
+          className="w-8 h-8 flex items-center justify-center bg-white border border-gray-200 rounded-md text-gray-600 hover:text-green-600 hover:bg-green-50 transition-colors shadow-sm"
+        >
+          <Plus size={16} />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const SectionCard = ({ title, children, color }) => {
+  const colorMap = {
+    red: "border-t-red-500",
+    green: "border-t-green-500",
+    blue: "border-t-blue-500",
+  };
+
+  return (
+    <div className={`bg-white rounded-2xl shadow-sm border border-gray-200 border-t-4 ${colorMap[color]} overflow-hidden`}>
+      <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+        <h3 className="font-bold text-lg text-gray-800">{title}</h3>
+      </div>
+      <div className="p-6 space-y-4">
+        {children}
+      </div>
+    </div>
+  );
+};
+
+export default function ConductScoreApp() {
+  // State: Penalties
+  const [penalties, setPenalties] = useState({
+    critical: 0,
+    behavior: 0,
+    academic: 0,
+    unexcused: 0,
+    excused: 0
+  });
+
+  // State: Bonuses
+  const [bonuses, setBonuses] = useState({
+    activityPoints: 0,
+    activityCount: 0,
+    extraPoints: 0
+  });
+
+  const results = useMemo(() => {
+    const baseScore = 80;
+
+    // Penalty Calculation
+    const penaltyExcused = Math.max(0, penalties.excused - 4) * 1;
+    const penaltyPoints = 
+      (penalties.critical * 4) + 
+      (penalties.behavior * 2) + 
+      (penalties.academic * 1) + 
+      (penalties.unexcused * 2) + 
+      penaltyExcused;
+
+    // Bonus Calculation
+    const totalBonus = bonuses.activityPoints + bonuses.extraPoints;
+
+    // Total Score
+    const rawScore = baseScore - penaltyPoints + totalBonus;
+    const finalScore = Math.min(100, rawScore);
+
+    // Minor Errors & Reduction
+    const rawMinorErrors = penalties.behavior + penalties.academic;
+    let errorReduction = 0;
+    if (bonuses.activityCount >= 8) errorReduction = 2;
+    else if (bonuses.activityCount >= 5) errorReduction = 1;
+    
+    const finalMinorErrors = Math.max(0, rawMinorErrors - errorReduction);
+
+    // Ranking Logic
+    let rank = "CHƯA ĐẠT";
+    let rankStyles = "bg-red-50 text-red-700 border-red-200 shadow-red-100/50";
+    let rankIconColor = "text-red-500";
+
+    if (penalties.critical > 0 || finalScore < 50 || finalMinorErrors > 10) {
+      rank = "CHƯA ĐẠT";
+      rankStyles = "bg-red-50 text-red-700 border-red-200 shadow-red-100/50";
+      rankIconColor = "text-red-500";
+    } else if (finalScore >= 85 && finalMinorErrors < 3) {
+      rank = "TỐT";
+      rankStyles = "bg-emerald-50 text-emerald-700 border-emerald-200 shadow-emerald-100/50";
+      rankIconColor = "text-emerald-500";
+    } else if (finalScore >= 65 && finalMinorErrors <= 6) {
+      rank = "KHÁ";
+      rankStyles = "bg-blue-50 text-blue-700 border-blue-200 shadow-blue-100/50";
+      rankIconColor = "text-blue-500";
+    } else if (finalScore >= 50 && finalMinorErrors <= 10) {
+      rank = "ĐẠT";
+      rankStyles = "bg-orange-50 text-orange-700 border-orange-200 shadow-orange-100/50";
+      rankIconColor = "text-orange-500";
+    }
+
+    return {
+      baseScore,
+      penaltyPoints,
+      totalBonus,
+      finalScore,
+      rawMinorErrors,
+      errorReduction,
+      finalMinorErrors,
+      rank,
+      rankStyles,
+      rankIconColor
+    };
+  }, [penalties, bonuses]);
+
+  return (
+    <div className="min-h-screen bg-slate-100 font-sans p-4 md:p-6 lg:p-8 text-gray-800">
+      <div className="max-w-6xl mx-auto">
+        <header className="mb-8 text-center lg:text-left">
+          <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">Hệ Thống Tính Điểm Rèn Luyện</h1>
+          <p className="text-slate-500 mt-2 text-lg">Cập nhật quy chế bù trừ và điểm chuẩn mới nhất</p>
+        </header>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* Left Column: Form Inputs */}
+          <div className="lg:col-span-8 space-y-6">
+            
+            <SectionCard title="I. Vi Phạm Kỷ Luật & Chuyên Cần" color="red">
+              <NumberInput 
+                label="Lỗi Nghiêm Trọng" 
+                description="-4 điểm/lần (Trực tiếp xếp loại Chưa Đạt)" 
+                value={penalties.critical} 
+                onChange={(v) => setPenalties({...penalties, critical: v})}
+                icon={AlertTriangle} colorTheme="red"
+              />
+              <NumberInput 
+                label="Lỗi Nề Nếp" 
+                description="-2 điểm/lần (Điện thoại, đồng phục, ồn ào...)" 
+                value={penalties.behavior} 
+                onChange={(v) => setPenalties({...penalties, behavior: v})}
+                icon={Info} colorTheme="orange"
+              />
+              <NumberInput 
+                label="Lỗi Học Tập" 
+                description="-1 điểm/lần (Thiếu bài, trễ deadline...)" 
+                value={penalties.academic} 
+                onChange={(v) => setPenalties({...penalties, academic: v})}
+                icon={BookOpen} colorTheme="blue"
+              />
+              <div className="pt-2">
+                <h4 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Vắng Mặt</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <NumberInput 
+                    label="Vắng Không Phép" 
+                    description="-2 điểm/buổi" 
+                    value={penalties.unexcused} 
+                    onChange={(v) => setPenalties({...penalties, unexcused: v})}
+                    icon={CalendarX2} colorTheme="red"
+                  />
+                  <NumberInput 
+                    label="Vắng Có Phép" 
+                    description="Miễn 4 buổi đầu. Từ buổi 5: -1 điểm/buổi" 
+                    value={penalties.excused} 
+                    onChange={(v) => setPenalties({...penalties, excused: v})}
+                    icon={CalendarX2} colorTheme="orange"
+                  />
+                </div>
+              </div>
+            </SectionCard>
+
+            <SectionCard title="II. Điểm Cộng & Phong Trào" color="green">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <NumberInput 
+                  label="Tổng Điểm Phong Trào" 
+                  description="Tổng số điểm quy đổi từ các hoạt động" 
+                  value={bonuses.activityPoints} 
+                  onChange={(v) => setBonuses({...bonuses, activityPoints: v})}
+                  icon={Award} colorTheme="green"
+                />
+                <NumberInput 
+                  label="Số Lần Tham Gia HĐ" 
+                  description="Dùng để xét duyệt xóa lỗi bù trừ" 
+                  value={bonuses.activityCount} 
+                  onChange={(v) => setBonuses({...bonuses, activityCount: v})}
+                  icon={Activity} colorTheme="blue"
+                />
+              </div>
+              <NumberInput 
+                label="Điểm Thưởng Khác" 
+                description="Ban cán sự, giải thưởng đặc biệt..." 
+                value={bonuses.extraPoints} 
+                onChange={(v) => setBonuses({...bonuses, extraPoints: v})}
+                icon={Plus} colorTheme="green"
+              />
+            </SectionCard>
+
+          </div>
+
+          {}
+          <div className="lg:col-span-4 sticky top-6">
+            <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden">
+              
+              {/* Result Header */}
+              <div className="bg-slate-900 px-6 py-5 flex items-center justify-between">
+                <h2 className="text-xl font-bold text-white flex items-center">
+                  <Calculator className="mr-2 text-blue-400" size={24}/> Kết Quả
+                </h2>
+              </div>
+              
+              <div className="p-6">
+                
+                {/* Ranking Display */}
+                <div className={`p-5 rounded-2xl border-2 flex flex-col items-center justify-center text-center shadow-lg transition-all duration-300 mb-6 ${results.rankStyles}`}>
+                  <ShieldCheck size={40} className={`mb-2 ${results.rankIconColor}`} />
+                  <span className="text-sm uppercase font-bold tracking-widest opacity-80 mb-1">Xếp loại rèn luyện</span>
+                  <span className="text-4xl font-black tracking-wide">{results.rank}</span>
+                  
+                  {penalties.critical > 0 && (
+                     <span className="mt-3 text-xs font-bold bg-red-200 text-red-900 px-3 py-1 rounded-full border border-red-300">
+                       Dính lỗi nghiêm trọng
+                     </span>
+                  )}
+                  {results.rank !== "TỐT" && results.finalScore >= 85 && results.finalMinorErrors >= 3 && (
+                     <span className="mt-3 text-xs font-semibold bg-white/50 px-3 py-1 rounded-full border border-current opacity-90">
+                       Hạ bậc do dính {results.finalMinorErrors} lỗi
+                     </span>
+                  )}
+                </div>
+
+                {/* Main Final Score */}
+                <div className="flex justify-between items-end mb-6 pb-6 border-b border-gray-100">
+                  <span className="text-gray-500 font-bold tracking-wide uppercase text-sm mb-2">Điểm Chốt</span>
+                  <div className="text-right">
+                    <div className="text-5xl font-black text-slate-900 tracking-tighter">
+                      {results.finalScore} <span className="text-2xl text-slate-400 font-medium tracking-normal">/ 100</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Breakdown List */}
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-500 font-medium">Điểm gốc cơ sở:</span>
+                    <span className="font-bold text-gray-800 text-base">80</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-red-500 font-medium">Tổng điểm trừ:</span>
+                    <span className="font-bold text-red-600 text-base">-{results.penaltyPoints}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-emerald-600 font-medium">Tổng điểm cộng:</span>
+                    <span className="font-bold text-emerald-600 text-base">+{results.totalBonus}</span>
+                  </div>
+                </div>
+
+                {/* Error Reduction Breakdown */}
+                <div className="mt-6 pt-5 border-t border-gray-100">
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Thống Kê Bù Trừ Lỗi</h4>
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Lỗi nề nếp & học tập:</span>
+                      <span className="font-bold text-gray-800">{results.rawMinorErrors}</span>
+                    </div>
+                    <div className="flex justify-between text-emerald-600">
+                      <span>Được bù trừ xóa lỗi:</span>
+                      <span className="font-bold">-{results.errorReduction}</span>
+                    </div>
+                    <div className="pt-2 mt-2 border-t border-slate-200 flex justify-between font-bold">
+                      <span className="text-gray-900">Lỗi còn lại tính xếp loại:</span>
+                      <span className="text-gray-900 text-base">{results.finalMinorErrors}</span>
+                    </div>
+                  </div>
+                  
+                  {results.errorReduction > 0 && (
+                    <div className="mt-3 flex items-start p-3 bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-100 text-xs leading-relaxed">
+                      <Activity size={16} className="mr-2 mt-0.5 shrink-0" />
+                      <p>Hệ thống đã tự động bù trừ <b>{results.errorReduction} lỗi vi phạm</b> nhờ thành tích tham gia {bonuses.activityCount} hoạt động phong trào.</p>
+                    </div>
+                  )}
+                </div>
+
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+  );
+}

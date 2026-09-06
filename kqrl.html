@@ -180,12 +180,12 @@
             </div>
             <div class="form-group">
                 <label>⚠️ Lỗi Vi Phạm Nề Nếp / Học Tập</label>
-                <input type="text" id="txtViPham" placeholder="VD: Không tập, Đi trễ, Quên sách vở, Trễ thi HK...">
-                <div class="hint" style="color: var(--danger); font-weight: bold;">Ghi chú tự động: KTTT/Thi HK (-3đ), Học tập/Không tập/Quên vở (-1đ). <br>Đặc biệt: Bất kỳ vi phạm nào lặp lại lần thứ 4 đều bị trừ nặng (-5đ).</div>
+                <input type="text" id="txtViPham" placeholder="VD: Quên sách vở, Đi trễ, Sử dụng ĐTDĐ, Trễ thi HK...">
+                <div class="hint" style="color: var(--danger); font-weight: bold;">Ghi chú tự động: Nặng(-4đ), Đặc biệt/Trễ KT/ĐTDĐ (-3đ), Thường(-2đ), Học tập(-1đ). <br>Bất kỳ vi phạm nào lặp lại lần thứ 4 đều bị trừ nặng (-5đ).</div>
             </div>
             <div class="form-group">
                 <label>🏆 Phong Trào / Hoạt Động</label>
-                <input type="text" id="txtPhongTrao" placeholder="VD: Đá bóng; Tiếng hát; Kể chuyện Bác Hồ">
+                <input type="text" id="txtPhongTrao" placeholder="VD: Tiếng hát học sinh; Dân vũ; Hoạt động trực tuyến">
                 <div class="hint" style="color: var(--info-dark); font-weight: bold;">Hệ thống tự nhận diện điểm từ khóa. Hoặc bạn có thể chủ động gõ thêm (+3đ), (+5đ)... vào cuối câu.</div>
             </div>
         </div>
@@ -223,7 +223,7 @@
                 <tr>
                     <th>STT</th>
                     <th style="text-align: left; padding-left: 20px;">Họ và Tên</th>
-                    <th title="Lỗi Nặng: -4đ | Trễ Thi/KT: -3đ | Thường: -2đ | Học tập/Nhỏ: -1đ | Lặp lại lần 4: -5đ | Vắng KP: -2đ | Vắng CP (>4): -1đ">Điểm Trừ VP</th>
+                    <th title="Nặng: -4đ | Đặc biệt/Thi/ĐTDĐ: -3đ | Thường: -2đ | Nhỏ: -1đ | Lặp lại lần 4: -5đ | Vắng KP: -2đ | Vắng CP: -1đ">Điểm Trừ VP</th>
                     <th title="Phong trào: +1đ đến +5đ | Bỏ trực nhật/Thiếu HĐ: -1đ">Điểm Phong Trào</th>
                     <th title="Tổng điểm = 80 - Điểm Trừ + Điểm Phong trào (Tối đa 100)">Tổng Điểm</th>
                     <th>Cảnh Báo Nề Nếp</th>
@@ -335,30 +335,41 @@
     let currentDetailIndex = -1;
     let appConfig = { className: "11A7", teacherName: "Cam Bích Hằng", schoolYear: "2025-2026" };
 
-    // --- BỘ TỪ KHÓA CHUẨN ĐƯỢC TỐI ƯU TỪ BỘ QUY TẮC ---
-    const SEVERE_KEYWORDS = ['vô lễ', 'xúc phạm', 'thi cử', 'kiểm tra tập trung', 'hút thuốc', 'thuốc lá', 'chất cấm', 'rượu', 'bia', 'đánh nhau', 'gây rối', 'atgt', 'an toàn giao thông', 'mũ bảo hiểm', 'phân khối lớn'];
-    const MINOR_KEYWORDS = ['kiểm tra thường xuyên', 'kttx', 'trễ bài', 'sản phẩm', 'sổ sách', 'trực tuyến', 'đoàn phí', 'công trình thanh niên', 'không thuộc bài', 'không làm bài', 'không học bài', 'không đề cương', 'quên sách', 'quên vở', 'không chuẩn bị', 'thiếu bài', 'thiếu tài liệu', 'thiếu dụng cụ', 'chép bài', 'không tập', 'quên tập', 'thiếu tập'];
+    // --- BỘ TỪ KHÓA CHUẨN ĐƯỢC TỐI ƯU TỪ BỘ QUY TẮC MỚI ---
+    const SEVERE_KEYWORDS = ['vô lễ', 'xúc phạm', 'thuốc', 'chất cấm', 'rượu', 'bia', 'đánh nhau', 'gây rối', 'atgt', 'an toàn giao thông', 'mũ bảo hiểm', 'phân khối lớn'];
+    const SPECIAL_KEYWORDS = ['điện thoại', 'đtdđ', 'đánh bạc', 'ăn thua', 'đồi trụy', 'bạo lực', 'xích mích', 'gian dối', 'giả chữ ký', 'sửa điểm', 'sửa sổ', 'hư hại', 'tài sản', 'vệ sinh chung', 'người bên ngoài'];
+    const MINOR_KEYWORDS = ['trễ bài', 'sản phẩm', 'hình ảnh', 'sổ sách', 'trực tuyến', 'đoàn phí', 'công trình thanh niên', 'không thuộc', 'chưa thuộc', 'không làm', 'chưa làm', 'không học', 'không đề cương', 'quên sách', 'quên vở', 'không chuẩn bị', 'thiếu bài', 'thiếu tài liệu', 'thiếu dụng cụ', 'chép bài', 'không tập', 'quên tập', 'thiếu tập'];
 
-    // --- HÀM CHUẨN HÓA LỖI ĐỂ ĐẾM TRÙNG LẶP ---
-    // Gom các biến thể cách gõ khác nhau của GVCN về 1 nhóm gốc để đếm chính xác số lần tái phạm
+    // --- HÀM CHUẨN HÓA LỖI ĐỂ ĐẾM TRÙNG LẶP CHÍNH XÁC ---
     function normalizeVpName(text) {
         let t = text.toLowerCase().trim();
-        if (t.includes('trễ') && !t.includes('bài') && !t.includes('thi') && !t.includes('kiểm tra') && !t.includes('đoàn phí')) return 'đi trễ';
+        
+        // Trễ/vắng liên quan đến kiểm tra, thi
+        let isExamRelated = ['kttt', 'kthk', 'kiểm tra', 'hk1', 'hk2'].some(kw => t.includes(kw)) || /\bkt\b/.test(t) || /\bthi\b/.test(t);
+        if ((t.includes('trễ') || t.includes('vắng') || t.includes('bỏ')) && isExamRelated) return 'trễ/vắng kiểm tra';
+        
+        // Đi trễ thông thường
+        if (t.includes('trễ') && !t.includes('bài') && !t.includes('đoàn phí')) return 'đi trễ';
+        
         if (t.includes('không thuộc') || t.includes('chưa thuộc')) return 'không thuộc bài';
         if (t.includes('không làm') || t.includes('chưa làm')) return 'không làm bài';
-        if (t.includes('không tập') || t.includes('quên tập') || t.includes('thiếu tập') || t.includes('quên vở') || t.includes('không vở') || t.includes('quên sách') || t.includes('thiếu sách')|| t.includes('quên đề cương')) return 'thiếu tập/sách vở';
+        if (t.includes('không tập') || t.includes('quên tập') || t.includes('thiếu tập') || t.includes('quên vở') || t.includes('không vở') || t.includes('quên sách') || t.includes('thiếu sách')) return 'thiếu tập/sách vở';
         if (t.includes('nói chuyện') || t.includes('ồn ào') || t.includes('mất trật tự')) return 'nói chuyện/ồn ào';
         if (t.includes('đồng phục') || t.includes('áo dài') || t.includes('bảng tên') || t.includes('phù hiệu') || t.includes('sơ vin') || t.includes('thể dục') || t.includes('tdtt')) return 'vi phạm đồng phục';
-        if (t.includes('điện thoại')) return 'sử dụng điện thoại';
+        
+        // Điện thoại
+        if (t.includes('điện thoại') || t.includes('đtdđ')) return 'sử dụng điện thoại';
+        
         if (t.includes('vệ sinh') || t.includes('xả rác') || t.includes('đổ rác')) return 'vệ sinh/trực nhật';
         if (t.includes('chưa hoàn thành công việc được giao')) return 'chưa hoàn thành công việc được giao';
+        
         if (t.includes('gian lận')) {
             if (t.includes('thường xuyên') || t.includes('miệng') || t.includes('15 phút') || t.includes('kttx')) return 'gian lận kttx';
             return 'gian lận thi cử';
         }
+        
         if (t.includes('vô lễ') || t.includes('xúc phạm')) return 'vô lễ/xúc phạm';
         
-        // Cắt bỏ phần lý do trong ngoặc (nếu có) để lấy lõi
         return t.replace(/\(.*?\)/g, '').replace(/\[.*?\]/g, '').split('-')[0].split(':')[0].trim();
     }
 
@@ -456,20 +467,21 @@
         });
     }
 
-    // BỘ MÁY XỬ LÝ TỪ KHÓA THÔNG MINH
+    // BỘ MÁY XỬ LÝ TỪ KHÓA ĐIỂM THƯỞNG
     function getActivityPoints(text) {
         let txt = text.toLowerCase();
         let match = txt.match(/\(\+(\d+)(đ|)\)/);
-        if (match) return parseInt(match[1]); // Quét ưu tiên tự gõ (+5đ), (+3đ)
+        if (match) return parseInt(match[1]); 
 
-        if (['trải nghiệm', 'sử ca', 'kể chuyện', 'bác hồ', 'tiếng hát', 'stem', 'trại', 'phim ngắn', 'lớp trưởng', 'lớp phó'].some(k => txt.includes(k))) return 5;
+        if (['trải nghiệm', 'sử ca', 'kể chuyện', 'bác hồ', 'tiếng hát', 'stem', 'atgt', 'trại', 'lớp trưởng', 'lớp phó', 'bch', 'chi đoàn'].some(k => txt.includes(k))) return 5;
         if (['flashmob'].some(k => txt.includes(k))) return 4;
-        if (['dân vũ', 'báo tường', 'trang trí', 'tổ trưởng', 'bch', 'chi đoàn', 'giải nhất', 'hạng nhất'].some(k => txt.includes(k))) return 3;
-        if (['trực tuyến', 'avatar', 'tiết học tốt', 'hoa điểm 10', 'cắm hoa', 'nấu ăn', 'giải nhì', 'hạng nhì', 'thể thao', 'hội thao', 'bóng đá', 'bóng rổ', 'bóng chuyền', 'cầu lông', 'kéo co', 'bơi lội', 'điền kinh'].some(k => txt.includes(k))) return 2;
-
+        if (['dân vũ', 'báo tường', 'thiết kế', 'trang trí', 'phim ngắn', 'tổ trưởng', 'nhất'].some(k => txt.includes(k))) return 3;
+        if (['trực tuyến', 'avatar', 'nhì'].some(k => txt.includes(k))) return 2;
+        
         return 1; 
     }
 
+    // BỘ MÁY XỬ LÝ TỪ KHÓA LỖI VI PHẠM (ĐÃ CHUẨN HÓA LẠI THEO YÊU CẦU MỚI)
     function getVpInfo(txt, instanceCount) {
         let lowerTxt = txt.toLowerCase();
         
@@ -479,10 +491,10 @@
         // 2. Phạt phong trào: Trừ 1 điểm vào quỹ phong trào
         if (lowerTxt.includes('chưa hoàn thành công việc được giao')) return { type: 'missed_pt', deduct: 1, label: 'Thiếu HĐ' };
         
-        // 3. Phân biệt Gian lận (Thi cử -4đ vs KTTX -2đ)
+        // 3. Phân biệt Gian lận (Thi cử -4đ vs KTTX -3đ)
         if (lowerTxt.includes('gian lận')) {
             if (lowerTxt.includes('thường xuyên') || lowerTxt.includes('miệng') || lowerTxt.includes('15 phút') || lowerTxt.includes('kttx')) {
-                return { type: 'normal', deduct: 2, label: 'Lỗi thường' };
+                return { type: 'special', deduct: 3, label: 'Lỗi đặc biệt' };
             }
             return { type: 'severe', deduct: 4, label: 'Lỗi nặng' }; 
         }
@@ -490,17 +502,20 @@
         // 4. Lỗi nặng từ hệ thống (-4đ)
         if (SEVERE_KEYWORDS.some(kw => lowerTxt.includes(kw))) return { type: 'severe', deduct: 4, label: 'Lỗi nặng' };
         
-        // 5. Lỗi Thi cử / KTTT (-3đ) - (Phải ngoại trừ các chữ liên quan đến KTTX)
-        if (['kttt', 'thi hk', 'kthk', 'kiểm tra', ' kt ', 'thi giữa kỳ', 'thi cuối kỳ'].some(kw => lowerTxt.includes(kw))) {
-            if (!lowerTxt.includes('kttx') && !lowerTxt.includes('thường xuyên') && !lowerTxt.includes('miệng') && !lowerTxt.includes('15 phút')) {
-                return { type: 'exam', deduct: 3, label: 'Lỗi thi cử' };
-            }
+        // 5. Lỗi Đặc biệt (-3đ): Điện thoại, đánh bạc, xích mích... VÀ TRỄ KT/THI
+        if (SPECIAL_KEYWORDS.some(kw => lowerTxt.includes(kw)) || lowerTxt.includes('đtdđ')) {
+            return { type: 'special', deduct: 3, label: 'Lỗi đặc biệt' };
         }
         
-        // 6. Lỗi học tập / Lỗi nhỏ (-1đ)
+        let isExam = ['kttt', 'kthk', 'kiểm tra', 'hk1', 'hk2', 'giữa kỳ', 'cuối kỳ'].some(kw => lowerTxt.includes(kw)) || /\bkt\b/.test(lowerTxt) || /\bthi\b/.test(lowerTxt);
+        if (isExam && (lowerTxt.includes('trễ') || lowerTxt.includes('vắng') || lowerTxt.includes('bỏ'))) {
+            return { type: 'special', deduct: 3, label: 'Lỗi đặc biệt' };
+        }
+        
+        // 6. Lỗi học tập / Lỗi nhỏ (-1đ): Bao gồm không tập, quên tập, thiếu tập...
         if (MINOR_KEYWORDS.some(kw => lowerTxt.includes(kw))) return { type: 'minor', deduct: 1, label: 'Lỗi học tập' };
         
-        // 7. Mặc định là lỗi nề nếp (-2đ)
+        // 7. Mặc định là lỗi nề nếp thông thường (-2đ)
         return { type: 'normal', deduct: 2, label: 'Lỗi thường' };
     }
 
@@ -515,7 +530,7 @@
         });
 
         let deductVp = 0; let severeCount = 0; let normalVpCount = 0; let minorVpCount = 0; 
-        let examVpCount = 0; let repeatedVpCount = 0; let missedPtCount = 0;
+        let specialVpCount = 0; let repeatedVpCount = 0; let missedPtCount = 0;
         
         let vpFreq = {};
 
@@ -531,26 +546,26 @@
                 deductVp += info.deduct;
                 if (info.type === 'repeated') { repeatedVpCount++; }
                 else if (info.type === 'severe') { severeCount++; }
-                else if (info.type === 'exam') { examVpCount++; }
+                else if (info.type === 'special') { specialVpCount++; }
                 else if (info.type === 'minor') { minorVpCount++; }
                 else { normalVpCount++; }
             }
         });
 
+        // Điểm trừ chuyên cần (CP -1, KP -2)
+        let deductCp = cpCount * 1; 
         let deductKp = kpCount * 2; 
-        let deductCp = Math.max(0, cpCount - 4) * 1; 
         let totalDeduct = deductVp + deductKp + deductCp;
         
         // Chỉ những lỗi học tập, kiểm tra và vắng học mới được đưa vào danh sách cho phép bù trừ
-        let reducibleErrors = normalVpCount + minorVpCount + examVpCount + kpCount + Math.max(0, cpCount - 4);
+        let reducibleErrors = normalVpCount + minorVpCount + specialVpCount + kpCount;
         
         let errorReduced = 0;
         if (ptCount >= 8) errorReduced = 2; else if (ptCount >= 5) errorReduced = 1;
 
-        // Bù trừ chỉ áp dụng tối đa bằng số lỗi được phép bù trừ hiện có
         let actualErrorReduced = Math.min(errorReduced, reducibleErrors);
 
-        // Lỗi lặp lại cố ý và lỗi nghiêm trọng KHÔNG THỂ BÙ TRỪ. Cộng ngược lỗi lặp lại cố ý vào bộ đếm cuối cùng.
+        // Lỗi lặp lại cố ý và lỗi nghiêm trọng KHÔNG THỂ BÙ TRỪ. Cộng ngược vào bộ đếm khống chế cuối cùng.
         let finalErrors = (reducibleErrors - actualErrorReduced) + repeatedVpCount;
         totalBonus = Math.max(0, totalBonus - missedPtCount); 
         
@@ -559,7 +574,7 @@
 
         let rank = ""; let rankClass = ""; let color = "";
         
-        // BỘ QUY TẮC XẾP LOẠI MỚI CHUẨN CHỈ
+        // BỘ QUY TẮC XẾP LOẠI MỚI
         if (severeCount > 0 || finalErrors > 10 || finalScore < 50) { rank = "CHƯA ĐẠT"; rankClass = "rank-chuadat"; color = "var(--danger)"; } 
         else if (finalErrors >= 7 || finalScore < 65) { rank = "ĐẠT"; rankClass = "rank-dat"; color = "var(--warning)"; } 
         else if (finalErrors >= 3 || finalScore < 85) { rank = "KHÁ"; rankClass = "rank-kha"; color = "var(--info-dark)"; } 
@@ -603,9 +618,8 @@
         const totalAbs = scoreObj.cpCount + scoreObj.kpCount;
         if (totalAbs === 0) ccTxt = "Đảm bảo chuyên cần, đi học đầy đủ.";
         else if (scoreObj.kpCount > 0) ccTxt = `<span style='color:var(--danger); font-weight:bold;'>Đi học chưa chuyên cần, còn vắng KHÔNG phép ${scoreObj.kpCount} buổi.</span>`;
-        else if (scoreObj.cpCount > 4) ccTxt = `<span style='color:var(--warning); font-weight:bold;'>Nghỉ học có phép khá nhiều (${scoreObj.cpCount} buổi) làm ảnh hưởng điểm rèn luyện.</span>`;
-        else ccTxt = `Đi học cơ bản đầy đủ, có vắng ${scoreObj.cpCount} buổi.`;
-
+        else if (scoreObj.cpCount > 0) ccTxt = `<span style='color:var(--warning); font-weight:bold;'>Nghỉ học có phép (${scoreObj.cpCount} buổi) bị ghi nhận trừ điểm rèn luyện.</span>`;
+        
         return `<p style="margin:0 0 8px 0;"><strong>• Về kỷ luật:</strong> ${klTxt}</p><p style="margin:0 0 8px 0;"><strong>• Về chuyên cần:</strong> ${ccTxt}</p><p style="margin:0;"><strong>• Về phong trào:</strong> ${ptTxt}</p>`;
     }
 
@@ -746,6 +760,7 @@
                 let info = log.info;
                 let iconStr = '⚠️';
                 if (info.type === 'severe') iconStr = '🔥';
+                else if (info.type === 'special') iconStr = '🚨';
                 else if (info.type === 'exam') iconStr = '📝';
                 else if (info.type === 'minor') iconStr = '📚';
                 else if (info.type === 'repeated') iconStr = '🛑';
@@ -767,9 +782,8 @@
         }
         if (sc.cpCount > 0) {
             vpHTML += student.logs.vangCoPhep.map((log, i) => {
-                let ptDeduct = (i >= 4) ? '<b style="color:var(--danger)">(-1đ)</b>' : '<b style="color:var(--success)">(Không trừ)</b>';
                 prVpHTML += `<tr><td class="text-center">${vpIndex++}</td><td>Nghỉ Có phép: ${log.text}</td><td class="text-center">${log.date}</td></tr>`;
-                return `<div class="p-list-item"><div class="p-list-content"><span class="p-icon-check" style="color:var(--warning);">📅</span> <div><b>Nghỉ Có phép</b>: ${log.text} ${ptDeduct}<span>(${log.date})</span></div></div><button class="btn-del-item" onclick="deleteLog('vangCoPhep', ${log.id})" title="Xóa dữ liệu">✕</button></div>`;
+                return `<div class="p-list-item"><div class="p-list-content"><span class="p-icon-check" style="color:var(--warning);">📅</span> <div><b>Nghỉ Có phép</b>: ${log.text} <b style="color:var(--danger)">(-1đ)</b><span>(${log.date})</span></div></div><button class="btn-del-item" onclick="deleteLog('vangCoPhep', ${log.id})" title="Xóa dữ liệu">✕</button></div>`;
             }).join('');
         }
 
