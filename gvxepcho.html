@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Sơ Đồ Kéo Thả GV Tự Xếp - GVCN</title>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --info: #0ea5e9; --info-dark: #0284c7; --border-color: #e2e8f0; 
+            --primary-orange: #f97316; --dark-orange: #ea580c; --light-orange: #fff7ed;
+            --bg-body: #f8fafc; --text-main: #1e293b; --success: #10b981;
+            --purple: #8b5cf6; --danger: #ef4444;
+        }
+        
+        body { 
+            font-family: 'Inter', sans-serif; background-color: var(--bg-body); 
+            padding: 20px; color: var(--text-main); margin: 0;
+            background-image: radial-gradient(#cbd5e1 1.5px, transparent 1.5px); 
+            background-size: 30px 30px;
+        }
+        
+        .main-container { display: flex; gap: 20px; max-width: 1450px; margin: 0 auto; align-items: flex-start; transition: all 0.3s ease; }
+
+        .sidebar { 
+            flex: 0 0 300px; background: white; border: 2px solid var(--border-color); 
+            border-radius: 16px; padding: 20px; position: sticky; top: 20px; 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.03); transition: all 0.3s ease; overflow: hidden;
+            max-height: 95vh; display: flex; flex-direction: column;
+        }
+        
+        .sidebar h3 { margin-top: 0; color: var(--info); font-weight: 900; text-transform: uppercase; font-size: 15px; border-bottom: 2px dashed #e2e8f0; padding-bottom: 10px; margin-bottom: 15px;}
+        
+        /* Ghép cặp cố định */
+        .fixed-pair-box { background: #f1f5f9; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #cbd5e1;}
+        .fixed-pair-box h4 { margin: 0 0 10px 0; font-size: 13px; color: var(--text-main); text-transform: uppercase; font-weight: 900;}
+        .fp-selects { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;}
+        .fp-selects select { padding: 8px; border-radius: 8px; border: 1px solid #cbd5e1; font-family: inherit; font-size: 13px; font-weight: 600; outline: none;}
+        .btn-pair { background: var(--info-dark); color: white; border: none; padding: 8px; border-radius: 8px; font-weight: 800; cursor: pointer; width: 100%; transition: 0.2s;}
+        .btn-pair:hover { background: var(--info); }
+        .fp-list { list-style: none; padding: 0; margin: 10px 0 0 0; max-height: 100px; overflow-y: auto;}
+        .fp-item { background: white; border: 1px solid #cbd5e1; padding: 6px 10px; border-radius: 8px; font-size: 12.5px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;}
+        .fp-item button { background: none; border: none; color: var(--danger); font-weight: bold; cursor: pointer; font-size: 14px;}
+
+        /* Danh sách lớp */
+        .student-list-container { flex: 1; overflow-y: auto; border-top: 2px dashed #e2e8f0; padding-top: 15px; }
+        .student-list { list-style: none; padding: 0; margin: 0; }
+        .student-list li { padding: 8px 5px; border-bottom: 1px solid #f1f5f9; font-size: 13px; display: flex; justify-content: space-between; font-weight: 700; color: #334155;}
+        
+        /* CỘT PHẢI (Khu vực kéo thả sơ đồ) */
+        .content { flex: 1; transition: all 0.3s ease; }
+        
+        .action-bar { margin-bottom: 20px; display: flex; gap: 15px; flex-wrap: wrap; justify-content: space-between; align-items: center;}
+        .btn-action { padding: 12px 20px; border: none; border-radius: 12px; cursor: pointer; font-weight: 900; color: white; font-size: 14.5px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: 0.2s; display: flex; align-items: center; gap: 8px; font-family: inherit;}
+        .btn-action:hover { transform: translateY(-3px); filter: brightness(1.1); }
+        .btn-back-main { background: #f1f5f9; color: var(--text-main); border: 1px solid var(--border-color); text-decoration: none; padding: 12px 20px; border-radius: 12px; font-weight: 800; font-size: 14.5px; transition: 0.2s; display: flex; align-items: center; gap: 8px;}
+        .btn-back-main:hover { background: #e2e8f0; color: var(--primary-orange); border-color: #cbd5e1;}
+
+        /* Khu chứa các thẻ cặp đôi (Draggable Pool) */
+        .pair-pool {
+            background: white; border: 2px dashed var(--info); border-radius: 16px; padding: 20px;
+            min-height: 80px; display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 25px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.03); align-items: center;
+        }
+        .pool-placeholder { color: #94a3b8; font-size: 14px; font-style: italic; width: 100%; text-align: center; pointer-events: none;}
+
+        /* Thẻ cặp đôi kéo thả */
+        .draggable-pair {
+            background: white; border: 2px solid var(--info); border-radius: 10px; padding: 8px;
+            display: flex; gap: 6px; cursor: grab; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            width: 190px; justify-content: center; transition: 0.2s;
+        }
+        .draggable-pair:active { cursor: grabbing; transform: scale(1.05); box-shadow: 0 8px 15px rgba(0,0,0,0.1); border-color: var(--primary-orange);}
+        .draggable-pair div { flex: 1; text-align: center; font-size: 12px; font-weight: 800; padding: 6px 4px; border-radius: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border: 1px solid;}
+        .s-nam { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe !important;}
+        .s-nu { background: #fdf2f8; color: #be185d; border-color: #fbcfe8 !important;}
+
+        /* Sơ đồ chỗ ngồi (Drop Zones) */
+        .classroom-layout { background: white; border: 2px solid var(--border-color); border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);}
+        .desks-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; row-gap: 30px; }
+        
+        .desk-item { 
+            background: #f8fafc; border: 2px solid #bae6fd; border-radius: 14px; padding: 18px 10px 10px 10px; 
+            text-align: center; position: relative; min-height: 55px;
+            display: flex; align-items: center; justify-content: center; flex-direction: column;
+            transition: 0.2s;
+        }
+        .desk-label { font-size: 12px; font-weight: 900; color: white; background: var(--info); position: absolute; top: -12px; left: 50%; transform: translateX(-50%); padding: 3px 20px; border-radius: 20px; box-shadow: 0 2px 4px rgba(14,165,233,0.3);}
+        
+        .drop-zone { border: 2px dashed #cbd5e1; width: 100%; height: 100%; border-radius: 10px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .drop-zone.drag-over { background: #e0f2fe; border-color: var(--info-dark); border-style: solid;}
+        .empty-text { color: #94a3b8; font-size: 12.5px; font-style: italic; pointer-events: none;}
+        
+        /* Ẩn empty text khi có cặp đôi */
+        .drop-zone:has(.draggable-pair) .empty-text { display: none; }
+        .drop-zone:has(.draggable-pair) { border-color: transparent; }
+
+        .bottom-layout { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 20px; margin-top: 40px; border-top: 2px dashed var(--border-color); padding-top: 30px;}
+        .layout-box { border-radius: 12px; text-align: center; font-weight: 900; display: flex; align-items: center; justify-content: center; height: 50px;}
+        .box-board { background: #334155; color: white; border: 4px solid #1e293b; font-size: 16px; text-transform: uppercase; box-shadow: 0 10px 20px rgba(0,0,0,0.1);}
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <!-- BẢNG ĐIỀU KHIỂN BÊN TRÁI -->
+        <div class="sidebar">
+            <h3>📋 Bảng Điều Khiển Kéo Thả</h3>
+            
+            <div class="fixed-pair-box">
+                <h4>💞 Chỉ Định Ngồi Cùng Nhau</h4>
+                <div class="fp-selects">
+                    <select id="fp1"><option value="">-- Chọn Học Sinh 1 --</option></select>
+                    <select id="fp2"><option value="">-- Chọn Học Sinh 2 --</option></select>
+                    <button class="btn-pair" onclick="addFixedPair()">Gắn Kết Bắt Buộc 🔒</button>
+                </div>
+                <ul class="fp-list" id="fixedPairsList"></ul>
+            </div>
+
+            <div class="student-list-container">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <span style="font-size: 13px; font-weight: bold; color: var(--text-muted);">Đã kết nối:</span>
+                    <span style="background: var(--success); color: white; padding: 4px 12px; border-radius: 12px; font-weight: 900; font-size: 13px;" id="totalCount">0 HS</span>
+                </div>
+                <ul class="student-list" id="studentListUI">
+                    <li style="color: #94a3b8; font-style: italic;">Đang tải danh sách...</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- BẢNG SƠ ĐỒ LỚP -->
+        <div class="content">
+            <div class="action-bar">
+                <button class="btn-action" style="background: linear-gradient(135deg, var(--primary-orange), var(--dark-orange));" onclick="generatePairs()">
+                    🎲 GHÉP CẶP TỰ ĐỘNG
+                </button>
+                
+                <div style="display: flex; gap: 15px;">
+                    <button class="btn-action" style="background: linear-gradient(135deg, var(--success), #059669);" onclick="saveManualSeating()">
+                        💾 CHỐT & LƯU SƠ ĐỒ CHÍNH THỨC
+                    </button>
+                    <a href="sodolop.html" class="btn-back-main">⬅ Trở Về Sơ Đồ</a>
+                </div>
+            </div>
+
+            <!-- Khu chứa các cặp học sinh -->
+            <div id="pairPool" class="pair-pool" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                <div class="pool-placeholder" id="poolPlaceholder">Khu Vực Chờ: Bấm nút "Ghép Cặp Tự Động" để tạo danh sách kéo thả...</div>
+                <!-- Pairs will go here -->
+            </div>
+
+            <div class="classroom-layout">
+                <div class="desks-grid" id="deskGrid">
+                    <!-- Javascript sẽ render các bàn học ở đây -->
+                </div>
+
+                <div class="bottom-layout">
+                    <div class="layout-box" style="border: 2px dashed #cbd5e1; color:#94a3b8; font-size: 14px;">CỬA RA VÀO</div>
+                    <div class="layout-box box-board">BẢNG ĐEN / MÀN HÌNH TƯƠNG TÁC</div>
+                    <div class="layout-box" style="border: 2px dashed #cbd5e1; color:#94a3b8; font-size: 14px;">BÀN GIÁO VIÊN</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCbA_3aOK2tOHFpWpJBnOMgcDfTHNf5pro",
+            authDomain: "quanlylop-ntb.firebaseapp.com",
+            projectId: "quanlylop-ntb",
+            storageBucket: "quanlylop-ntb.firebasestorage.app",
+            messagingSenderId: "332000248751",
+            appId: "1:332000248751:web:ebb85e784b5bde121e255a",
+            measurementId: "G-7DZQL7ELDQ"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        let currentUser = null;
+        let studentsData = [];
+        let fixedPairs = [];
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                currentUser = user;
+                db.collection("quanlylop_data").doc(currentUser.uid).get().then(doc => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        let studentsToSave = data.StudentsData || data.DuLieu_Lop11_Master;
+                        if (studentsToSave) localStorage.setItem('DuLieu_Lop11_Master', studentsToSave);
+                    }
+                    loadStudents();
+                });
+            } else { loadStudents(); }
+        });
+
+        function loadStudents() {
+            const rawData = localStorage.getItem('DuLieu_Lop11_Master');
+            if (rawData) {
+                studentsData = JSON.parse(rawData);
+                renderStudentList();
+                populateFP();
+                initEmptyGrid();
+            } else {
+                document.getElementById('studentListUI').innerHTML = "<li style='color:var(--danger);'>Chưa có dữ liệu.</li>";
+            }
+        }
+
+        // TÍNH NĂNG TÊN 2 CHỮ BẢO ĐẢM KHÔNG TRÙNG
+        function getShortName(student) {
+            let nameCounts = {};
+            studentsData.forEach(s => {
+                let parts = s["Họ và Tên"].trim().split(' ');
+                let short = parts.length >= 2 ? parts.slice(-2).join(' ') : parts[0];
+                nameCounts[short] = (nameCounts[short] || 0) + 1;
+            });
+
+            let nameParts = student["Họ và Tên"].trim().split(' ');
+            let shortName = nameParts.length >= 2 ? nameParts.slice(-2).join(' ') : nameParts[0];
+            
+            if (nameCounts[shortName] > 1 && nameParts.length > 2) {
+                let prevWord = nameParts[nameParts.length - 3];
+                shortName = prevWord.charAt(0) + '. ' + shortName;
+            }
+            return shortName;
+        }
+
+        // TÍNH NĂNG GHÉP CẶP CỐ ĐỊNH
+        function populateFP() {
+            let opts = '<option value="">-- Chọn Học Sinh --</option>';
+            studentsData.forEach((s, i) => {
+                let shortName = getShortName(s);
+                opts += `<option value="${i}">${i+1}. ${shortName}</option>`;
+            });
+            document.getElementById('fp1').innerHTML = opts;
+            document.getElementById('fp2').innerHTML = opts;
+        }
+
+        function addFixedPair() {
+            let v1 = document.getElementById('fp1').value;
+            let v2 = document.getElementById('fp2').value;
+            if(v1 === "" || v2 === "") return alert("Vui lòng chọn đủ 2 học sinh!");
+            if(v1 === v2) return alert("Không thể ghép 1 người với chính mình!");
+            if(fixedPairs.some(p => p.includes(v1) || p.includes(v2))) return alert("Học sinh này đã được gắn kết với người khác rồi!");
+            
+            fixedPairs.push([v1, v2]);
+            document.getElementById('fp1').value = ""; document.getElementById('fp2').value = "";
+            renderFixedPairs();
+        }
+
+        function removeFixedPair(idx) {
+            fixedPairs.splice(idx, 1); renderFixedPairs();
+        }
+
+        function renderFixedPairs() {
+            const listUI = document.getElementById('fixedPairsList');
+            listUI.innerHTML = fixedPairs.map((p, idx) => {
+                let n1 = getShortName(studentsData[p[0]]);
+                let n2 = getShortName(studentsData[p[1]]);
+                return `<li class="fp-item"><span>${n1} ❤️ ${n2}</span> <button onclick="removeFixedPair(${idx})" title="Hủy gắn kết">✕</button></li>`;
+            }).join('');
+        }
+
+        function renderStudentList() {
+            const listUI = document.getElementById('studentListUI');
+            document.getElementById('totalCount').innerText = studentsData.length + " HS";
+            listUI.innerHTML = studentsData.map((s, i) => {
+                let gt = (s["Giới Tính"] || "").toLowerCase();
+                let color = gt.includes("nam") ? "#1d4ed8" : "#be185d";
+                let shortName = getShortName(s);
+                return `<li><span>${i + 1}. ${shortName}</span> <span style="color:${color}; font-size:12.5px;">${s["Giới Tính"]||"Khác"}</span></li>`;
+            }).join('');
+        }
+
+        function initEmptyGrid() {
+            const grid = document.getElementById('deskGrid'); let html = '';
+            for(let r = 0; r < 6; r++) { 
+                for(let c = 0; c < 4; c++) {
+                    let absId = c * 6 + r;
+                    html += `
+                        <div class="desk-item">
+                            <span class="desk-label">Bàn ${6 - r}</span>
+                            <div class="drop-zone" id="zone_${absId}" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)">
+                                <div class="empty-text">Kéo thả vào đây</div>
+                            </div>
+                        </div>`;
+                }
+            }
+            grid.innerHTML = html;
+        }
+
+        // TẠO DANH SÁCH KÉO THẢ
+        function generatePairs() {
+            if(studentsData.length === 0) return alert("Chưa có danh sách lớp!");
+            
+            let allPool = studentsData.map((s, idx) => ({ ...s, orgIdx: idx }));
+            const shuffleArray = (arr) => { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } };
+
+            let pairs = [];
+            let fixedIndices = new Set();
+            
+            // Lấy các cặp cố định
+            fixedPairs.forEach(pair => {
+                let s1 = allPool.find(s => s.orgIdx == pair[0]);
+                let s2 = allPool.find(s => s.orgIdx == pair[1]);
+                if(s1 && s2) {
+                    pairs.push([s1, s2]);
+                    fixedIndices.add(s1.orgIdx); fixedIndices.add(s2.orgIdx);
+                }
+            });
+
+            // Lọc ra các HS còn lại và ghép cặp
+            let remainingPool = allPool.filter(s => !fixedIndices.has(s.orgIdx));
+            let boys = remainingPool.filter(s => (s["Giới Tính"]||"").toLowerCase().includes('nam'));
+            let girls = remainingPool.filter(s => !(s["Giới Tính"]||"").toLowerCase().includes('nam'));
+
+            shuffleArray(boys); shuffleArray(girls);
+            while(boys.length >= 2) pairs.push([boys.pop(), boys.pop()]);
+            while(girls.length >= 2) pairs.push([girls.pop(), girls.pop()]);
+            
+            let leftovers = [...boys, ...girls]; shuffleArray(leftovers);
+            while(leftovers.length >= 2) pairs.push([leftovers.pop(), leftovers.pop()]);
+            if(leftovers.length === 1) pairs.push([leftovers.pop(), null]);
+            
+            shuffleArray(pairs);
+
+            // Xóa lưới hiện tại, khởi tạo lại
+            initEmptyGrid();
+            
+            // Render cặp vào khu vực chờ
+            let poolHtml = '';
+            pairs.forEach((p, idx) => {
+                if(Math.random() > 0.5) p.reverse();
+                let pairId = `draggable_pair_${idx}`;
+                
+                let s1Html = ""; let s2Html = "";
+                if(p[0]) {
+                    let gt = (p[0]["Giới Tính"]||"").toLowerCase().includes('nam') ? 's-nam' : 's-nu';
+                    s1Html = `<div class="${gt}">${p[0].orgIdx + 1}. ${getShortName(p[0])}</div>`;
+                } else {
+                    s1Html = `<div style="background:#f1f5f9; color:#94a3b8; border-color:#cbd5e1 !important;">Trống</div>`;
+                }
+
+                if(p[1]) {
+                    let gt = (p[1]["Giới Tính"]||"").toLowerCase().includes('nam') ? 's-nam' : 's-nu';
+                    s2Html = `<div class="${gt}">${p[1].orgIdx + 1}. ${getShortName(p[1])}</div>`;
+                } else {
+                    s2Html = `<div style="background:#f1f5f9; color:#94a3b8; border-color:#cbd5e1 !important;">Trống</div>`;
+                }
+
+                let data1 = p[0] ? p[0].orgIdx : "";
+                let data2 = p[1] ? p[1].orgIdx : "";
+
+                poolHtml += `
+                    <div class="draggable-pair" id="${pairId}" draggable="true" ondragstart="drag(event)" data-s1="${data1}" data-s2="${data2}">
+                        ${s1Html} ${s2Html}
+                    </div>
+                `;
+            });
+
+            const pool = document.getElementById('pairPool');
+            pool.innerHTML = poolHtml;
+        }
+
+        // ==========================================
+        // CÁC HÀM XỬ LÝ KÉO THẢ (DRAG & DROP)
+        // ==========================================
+        function allowDrop(ev) {
+            ev.preventDefault();
+            // Nếu vùng đang trỏ tới là drop-zone (bàn) thì highlight lên
+            let target = ev.target;
+            while (target && !target.classList.contains('drop-zone') && target.id !== 'pairPool') { target = target.parentElement; }
+            if(target && target.classList.contains('drop-zone')) target.classList.add('drag-over');
+        }
+
+        function dragLeave(ev) {
+            let target = ev.target;
+            while (target && !target.classList.contains('drop-zone')) { target = target.parentElement; }
+            if(target && target.classList.contains('drop-zone')) target.classList.remove('drag-over');
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("text", ev.target.id);
+        }
+
+        function drop(ev) {
+            ev.preventDefault();
+            var data = ev.dataTransfer.getData("text");
+            var draggedEl = document.getElementById(data);
+            
+            let dropTarget = ev.target;
+            while (dropTarget && !dropTarget.classList.contains('drop-zone') && dropTarget.id !== 'pairPool') { dropTarget = dropTarget.parentElement; }
+            if(!dropTarget) return;
+
+            if (dropTarget.classList.contains('drop-zone')) {
+                dropTarget.classList.remove('drag-over');
+                
+                // Nếu bàn đã có người, đưa người cũ về hồ chứa
+                let existingPair = dropTarget.querySelector('.draggable-pair');
+                if(existingPair && existingPair !== draggedEl) {
+                    document.getElementById('pairPool').appendChild(existingPair);
+                }
+                dropTarget.appendChild(draggedEl);
+            } 
+            else if (dropTarget.id === 'pairPool') {
+                dropTarget.appendChild(draggedEl);
+            }
+
+            // Xử lý hiển thị chữ "Kéo thả vào đây"
+            document.querySelectorAll('.drop-zone').forEach(zone => {
+                let emptyText = zone.querySelector('.empty-text');
+                if(emptyText) {
+                    emptyText.style.display = zone.querySelector('.draggable-pair') ? 'none' : 'block';
+                }
+            });
+            
+            // Xử lý hiển thị chữ Placeholder ở Hồ chứa
+            let pool = document.getElementById('pairPool');
+            let poolPlace = document.getElementById('poolPlaceholder');
+            if(poolPlace) {
+                poolPlace.style.display = pool.querySelector('.draggable-pair') ? 'none' : 'block';
+                if(!pool.querySelector('.draggable-pair')) {
+                    poolPlace.innerText = "Tuyệt vời! Bạn đã ghép xong toàn bộ chỗ ngồi.";
+                }
+            }
+        }
+
+        // LƯU SƠ ĐỒ CHÍNH THỨC
+        function saveManualSeating() {
+            let poolPairs = document.getElementById('pairPool').querySelectorAll('.draggable-pair');
+            if(poolPairs.length > 0) {
+                if(!confirm("Bạn chưa kéo hết học sinh vào bàn! Hệ thống sẽ chỉ lưu những vị trí đã có người ngồi. Bấm OK để tiếp tục lưu.")) return;
+            }
+
+            const seatingArray = new Array(48).fill("");
+            
+            // Quét qua 24 khu vực bàn
+            for(let c=0; c<4; c++) {
+                for(let r=0; r<6; r++) {
+                    let absId = c * 6 + r; // Từ 0 đến 23
+                    let zone = document.getElementById(`zone_${absId}`);
+                    if(zone) {
+                        let pairEl = zone.querySelector('.draggable-pair');
+                        if(pairEl) {
+                            let s1 = pairEl.getAttribute('data-s1');
+                            let s2 = pairEl.getAttribute('data-s2');
+                            seatingArray[absId * 2] = s1;
+                            seatingArray[absId * 2 + 1] = s2;
+                        }
+                    }
+                }
+            }
+
+            localStorage.setItem('Seating_Lop11', JSON.stringify(seatingArray));
+            
+            // Gỡ lịch trực cũ
+            localStorage.removeItem('DutySchedule_Lop11');
+            localStorage.removeItem('DutyPairIndex_Lop11');
+            localStorage.removeItem('DutyCurrentStartIndex_Lop11');
+
+            if(currentUser) {
+                db.collection("quanlylop_data").doc(currentUser.uid).set({
+                    Seating_Lop11: JSON.stringify(seatingArray),
+                    DutySchedule_Lop11: firebase.firestore.FieldValue.delete(),
+                    DutyPairIndex_Lop11: firebase.firestore.FieldValue.delete(),
+                    DutyCurrentStartIndex_Lop11: firebase.firestore.FieldValue.delete(),
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true }).then(() => {
+                    alert("✅ Lưu thành công! Sơ đồ kéo thả đã được đồng bộ làm sơ đồ chính thức của Lớp.");
+                });
+            } else {
+                alert("✅ Lưu thành công (Local)! Sơ đồ kéo thả đã được đồng bộ làm sơ đồ chính thức của Lớp.");
+            }
+        }
+    </script>
+</body>
+</html>

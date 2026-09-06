@@ -151,7 +151,7 @@
         .modal-header { text-align: center; margin-bottom: 25px; border-bottom: 2px dashed #ecf0f1; padding-bottom: 15px;}
         .modal-header h2 { margin: 0; font-size: 22px; font-weight: 900; color: var(--text-main); display: flex; align-items: center; justify-content: center; gap: 10px;}
 
-        /* BỘ CSS IN ẤN ĐÃ ĐƯỢC TỐI ƯU HÓA HOÀN HẢO CHO 1 TRANG A4 NGANG */
+        /* BỘ CSS IN ẤN ĐÃ ĐƯỢC TỐI ƯU HÓA HOÀN HẢO CHO 1 TRANG A4 NGANG KÈM FULL TÊN */
         #printDutyContainer { display: none; }
         .print-only-header { display: none; }
 
@@ -200,8 +200,8 @@
             body:not(.print-duty-mode) .desk-label { background: #000 !important; color: #fff !important; border: none !important; border-radius: 12px !important; font-size: 13px !important; font-weight: bold !important; padding: 4px 16px !important; top: -14px !important;}
             body:not(.print-duty-mode) .seat-wrapper { gap: 8px; height: 100%; align-items: stretch; }
             
-            /* Tên học sinh 2 chữ hiển thị sắc nét & Ẩn đi ô Trống hoàn toàn */
-            body:not(.print-duty-mode) .desk-item select.seat-select { border: 1px solid #555 !important; background: #fff !important; color: #000 !important; border-radius: 8px !important; font-size: 14.5px !important; padding: 8px 2px !important; font-weight: bold !important; height: 100% !important; white-space: pre-wrap !important; text-align: center !important; text-align-last: center !important; line-height: 1.4 !important; outline: none !important; appearance: none; -webkit-appearance: none;}
+            /* Tên học sinh full hiển thị sắc nét & Ẩn đi ô Trống hoàn toàn */
+            body:not(.print-duty-mode) .desk-item select.seat-select { border: 1px solid #555 !important; background: #fff !important; color: #000 !important; border-radius: 8px !important; font-size: 13px !important; padding: 6px 2px !important; font-weight: bold !important; height: 100% !important; white-space: pre-wrap !important; text-align: center !important; text-align-last: center !important; line-height: 1.3 !important; outline: none !important; appearance: none; -webkit-appearance: none;}
             
             body:not(.print-duty-mode) .desk-item select.seat-select.seat-nam, 
             body:not(.print-duty-mode) .desk-item select.seat-select.seat-nu { background-color: #fff !important; color: #000 !important; border-color: #555 !important; }
@@ -242,7 +242,9 @@
         <div class="action-bar">
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                 <button class="btn btn-random" onclick="autoArrangeSeats()">🎲 Xếp Chỗ Ngẫu Nhiên</button>
-                <a href="xepchovui.html" class="btn btn-custom-seat">✨ Xếp Chỗ Theo Yêu Cầu</a>
+                <a href="xepchovui.html" class="btn btn-custom-seat">✨ Hộp Mù / Vòng Quay</a>
+                <!-- NÚT MỚI: GV TỰ XẾP KÉO THẢ -->
+                <a href="gvxepcho.html" class="btn btn-review">🧑‍🏫 GV Tự Xếp (Kéo thả)</a>
                 <button class="btn btn-save" onclick="saveSeating()">💾 Lưu Sơ Đồ</button>
             </div>
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
@@ -547,7 +549,6 @@
         document.getElementById('pr-male').innerText = maleCount; document.getElementById('pr-female').innerText = femaleCount;
     }
 
-    // TÍNH NĂNG TÊN 2 CHỮ (BỔ SUNG QUÉT TRÙNG TÊN ĐỂ PHÂN BIỆT BẰNG CHỮ LÓT)
     function getStudentOptions() {
         let opts = `<option value="">-- Trống --</option>`;
         
@@ -562,15 +563,12 @@
             let nameParts = s["Họ và Tên"].trim().split(' ');
             let shortName = nameParts.length >= 2 ? nameParts.slice(-2).join(' ') : nameParts[0];
             
-            // Xử lý trùng tên: Thêm chữ cái đầu của chữ lót để phân biệt
             if (nameCounts[shortName] > 1 && nameParts.length > 2) {
                 let prevWord = nameParts[nameParts.length - 3];
                 shortName = prevWord.charAt(0) + '. ' + shortName;
             }
 
-            let gt = (s["Giới Tính"] || "").toLowerCase();
-            let icon = gt.includes("nam") ? "👦" : (gt.includes("nữ") || gt.includes("nu") ? "👧" : "👤");
-            opts += `<option value="${i}">${icon} ${s["STT"] || i+1}. ${shortName}</option>`; 
+            opts += `<option value="${i}">${s["STT"] || i+1}. ${shortName}</option>`; 
         });
         return opts;
     }
@@ -739,33 +737,31 @@
         }
     }
 
-    // TÍNH NĂNG IN SƠ ĐỒ SẠCH MỚI
     function printSeating() {
         const selects = document.querySelectorAll('.seat-select');
-        let originalEmptyTexts = [];
+        let originalTexts = [];
         
-        // Ẩn chữ "-- Trống --" khi in
         selects.forEach((sel, index) => {
+            let opt = sel.options[sel.selectedIndex];
+            originalTexts[index] = opt.text;
+            
             if(sel.value === "") {
-                let emptyOpt = sel.options[sel.selectedIndex];
-                originalEmptyTexts[index] = emptyOpt.text;
-                emptyOpt.text = ""; 
+                opt.text = ""; 
             } else {
-                originalEmptyTexts[index] = null;
+                let student = studentsData[sel.value];
+                let gt = (student["Giới Tính"] || "").toLowerCase();
+                let icon = gt.includes("nam") ? "👦" : (gt.includes("nữ") || gt.includes("nu") ? "👧" : "👤");
+                opt.text = `${icon} ${student["STT"] || parseInt(sel.value)+1}. ${student["Họ và Tên"]}`;
             }
         });
         
         window.print();
         
-        // Khôi phục lại chữ "-- Trống --" sau khi in xong
         selects.forEach((sel, index) => {
-            if(originalEmptyTexts[index] !== null) {
-                sel.options[sel.selectedIndex].text = originalEmptyTexts[index];
-            }
+            sel.options[sel.selectedIndex].text = originalTexts[index];
         });
     }
 
-    // TÍNH NĂNG XUẤT EXCEL MỚI
     function exportSeatingToExcel() {
         let wsData = [];
         let className = document.getElementById('info-lop').value || ".......";
@@ -791,8 +787,15 @@
                 let s1 = document.getElementById(`seat_${absId}_1`);
                 let s2 = document.getElementById(`seat_${absId}_2`);
                 
-                let text1 = (s1 && s1.value !== "") ? s1.options[s1.selectedIndex].text.replace(/👦 |👧 |👤 /, '') : "";
-                let text2 = (s2 && s2.value !== "") ? s2.options[s2.selectedIndex].text.replace(/👦 |👧 |👤 /, '') : "";
+                let text1 = ""; let text2 = "";
+                if(s1 && s1.value !== "") {
+                    let st = studentsData[s1.value];
+                    text1 = `${st["STT"] || parseInt(s1.value)+1}. ${st["Họ và Tên"]}`;
+                }
+                if(s2 && s2.value !== "") {
+                    let st = studentsData[s2.value];
+                    text2 = `${st["STT"] || parseInt(s2.value)+1}. ${st["Họ và Tên"]}`;
+                }
                 
                 rowData.push(text1); rowData.push(text2);
             }
@@ -854,7 +857,8 @@
 
     function deletePastWeek() {
         let weekDate = document.getElementById('pastWeekSelector').value; if(!weekDate) return;
-        if(!confirm("⚠️ CẢNH BÁO: Bạn có chắc chắn muốn XÓA BỎ HOÀN TOÀN tuần trực này khỏi lịch sử?")) return;
+        if(!confirm("⚠️ CẢNH BÁO: Bạn có chắc chắn muốn XÓA BỎ HOÀN TOÀN tuần trực này khỏi lịch sử?\n\n(Lưu ý: Nếu bạn đã lỡ Đánh Giá xấu cho học sinh trong tuần này thì các lỗi vi phạm trong sổ vẫn sẽ bị giữ lại. Hành động này chỉ xóa khỏi bảng xem lại lịch sử tuần.)")) return;
+        
         let history = JSON.parse(localStorage.getItem('DutyHistory_Lop11')) || {}; delete history[weekDate];
         localStorage.setItem('DutyHistory_Lop11', JSON.stringify(history)); saveToCloud();
         if (document.getElementById('tab-thongke').classList.contains('active')) renderStatistics();
