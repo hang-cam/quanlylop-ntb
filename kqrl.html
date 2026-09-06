@@ -55,7 +55,7 @@
         .form-group label { display: block; font-weight: 700; margin-bottom: 8px; color: var(--text-muted); text-transform: uppercase; font-size: 13px; letter-spacing: 0.5px;}
         .form-group input, .form-group select { width: 100%; padding: 12px 15px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box; font-size: 15px; transition: all 0.3s; color: var(--text-main); background: white;}
         .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--primary-orange); box-shadow: 0 0 0 3px var(--light-orange); }
-        .hint { font-size: 13px; color: var(--text-muted); margin-top: 6px; font-style: italic; }
+        .hint { font-size: 13px; color: var(--text-muted); margin-top: 6px; font-style: italic; line-height: 1.4; }
 
         .absence-box { background: #fff1f2; padding: 20px; border-radius: 12px; border: 1px solid #fecaca; margin-top: 20px; }
         .absence-grid { display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 15px; }
@@ -164,6 +164,7 @@
 <div class="header">
     <a href="index.html" class="btn-back">⬅ Quay Lại Trang Chủ</a>
     <h1>NHẬT KÝ RÈN LUYỆN & THEO DÕI NỀ NẾP</h1>
+    <!-- Thanh thông tin lớp đồng bộ -->
     <p>Lớp: <b id="sys-class-name">--</b> &nbsp;|&nbsp; GVCN: <b id="sys-teacher-name">--</b> &nbsp;|&nbsp; Năm học: <b id="sys-school-year">--</b></p>
     <button class="btn-logout" onclick="logout()" title="Đăng xuất khỏi hệ thống">Đăng xuất</button>
 </div>
@@ -178,14 +179,14 @@
                 <select id="selStudent"><option value="">-- Vui lòng chọn học sinh --</option></select>
             </div>
             <div class="form-group">
-                <label>⚠️ Lỗi Vi Phạm Nề Nếp</label>
-                <input type="text" id="txtViPham" placeholder="VD: Đi trễ, Không thuộc bài, KTTTHK, KP">
-                <div class="hint" style="color: var(--info-dark); font-weight: bold;">Mẹo: Gõ "CP [lý do]" hoặc "KP [lý do]" để tự động ghi nhận vắng học.</div>
+                <label>⚠️ Lỗi Vi Phạm Nề Nếp / Học Tập</label>
+                <input type="text" id="txtViPham" placeholder="VD: Không tập, Đi trễ, Quên sách vở, Trễ thi HK...">
+                <div class="hint" style="color: var(--danger); font-weight: bold;">Ghi chú tự động: KTTT/Thi HK (-3đ), Học tập/Không tập/Quên vở (-1đ). <br>Đặc biệt: Bất kỳ vi phạm nào lặp lại lần thứ 4 đều bị trừ nặng (-5đ).</div>
             </div>
             <div class="form-group">
                 <label>🏆 Phong Trào / Hoạt Động</label>
-                <input type="text" id="txtPhongTrao" placeholder="VD: Đá bóng; Văn nghệ 20/11">
-                <div class="hint">Ngăn cách các hoạt động bằng dấu phẩy (,) hoặc chấm phẩy (;)</div>
+                <input type="text" id="txtPhongTrao" placeholder="VD: Đá bóng; Tiếng hát; Kể chuyện Bác Hồ">
+                <div class="hint" style="color: var(--info-dark); font-weight: bold;">Hệ thống tự nhận diện điểm từ khóa. Hoặc bạn có thể chủ động gõ thêm (+3đ), (+5đ)... vào cuối câu.</div>
             </div>
         </div>
 
@@ -222,8 +223,8 @@
                 <tr>
                     <th>STT</th>
                     <th style="text-align: left; padding-left: 20px;">Họ và Tên</th>
-                    <th title="Lỗi HT: -1đ | Thường: -2đ | Nặng: -4đ | Vắng KP: -2đ | Vắng CP (>4): -1đ">Điểm Trừ VP</th>
-                    <th title="HĐ Phong trào: +1đ | Trực phạt/Thiếu HĐ: -1đ">Điểm Phong Trào</th>
+                    <th title="Lỗi Nặng: -4đ | Trễ Thi/KT: -3đ | Thường: -2đ | Học tập/Nhỏ: -1đ | Lặp lại lần 4: -5đ | Vắng KP: -2đ | Vắng CP (>4): -1đ">Điểm Trừ VP</th>
+                    <th title="Phong trào: +1đ đến +5đ | Bỏ trực nhật/Thiếu HĐ: -1đ">Điểm Phong Trào</th>
                     <th title="Tổng điểm = 80 - Điểm Trừ + Điểm Phong trào (Tối đa 100)">Tổng Điểm</th>
                     <th>Cảnh Báo Nề Nếp</th>
                     <th>Xếp Loại</th>
@@ -334,8 +335,32 @@
     let currentDetailIndex = -1;
     let appConfig = { className: "11A7", teacherName: "Cam Bích Hằng", schoolYear: "2025-2026" };
 
-    const SEVERE_KEYWORDS = ['thi cử', 'thi hk1', 'thi hk2', 'kttthk', 'kthk', 'gian lận', 'đánh nhau', 'thuốc lá', 'hút thuốc', 'vô lễ', 'xúc phạm'];
-    const ACADEMIC_KEYWORDS = ['thuộc bài', 'làm bài', 'học bài', 'chuẩn bị', 'bài tập', 'tài liệu', 'dụng cụ', 'học tập', 'đề cương', 'chép bài'];
+    // --- BỘ TỪ KHÓA CHUẨN ĐƯỢC TỐI ƯU TỪ BỘ QUY TẮC ---
+    const SEVERE_KEYWORDS = ['vô lễ', 'xúc phạm', 'thi cử', 'kiểm tra tập trung', 'hút thuốc', 'thuốc lá', 'chất cấm', 'rượu', 'bia', 'đánh nhau', 'gây rối', 'atgt', 'an toàn giao thông', 'mũ bảo hiểm', 'phân khối lớn'];
+    const MINOR_KEYWORDS = ['kiểm tra thường xuyên', 'kttx', 'trễ bài', 'sản phẩm', 'sổ sách', 'trực tuyến', 'đoàn phí', 'công trình thanh niên', 'không thuộc bài', 'không làm bài', 'không học bài', 'không đề cương', 'quên sách', 'quên vở', 'không chuẩn bị', 'thiếu bài', 'thiếu tài liệu', 'thiếu dụng cụ', 'chép bài', 'không tập', 'quên tập', 'thiếu tập'];
+
+    // --- HÀM CHUẨN HÓA LỖI ĐỂ ĐẾM TRÙNG LẶP ---
+    // Gom các biến thể cách gõ khác nhau của GVCN về 1 nhóm gốc để đếm chính xác số lần tái phạm
+    function normalizeVpName(text) {
+        let t = text.toLowerCase().trim();
+        if (t.includes('trễ') && !t.includes('bài') && !t.includes('thi') && !t.includes('kiểm tra') && !t.includes('đoàn phí')) return 'đi trễ';
+        if (t.includes('không thuộc') || t.includes('chưa thuộc')) return 'không thuộc bài';
+        if (t.includes('không làm') || t.includes('chưa làm')) return 'không làm bài';
+        if (t.includes('không tập') || t.includes('quên tập') || t.includes('thiếu tập') || t.includes('quên vở') || t.includes('không vở') || t.includes('quên sách') || t.includes('thiếu sách')|| t.includes('quên đề cương')) return 'thiếu tập/sách vở';
+        if (t.includes('nói chuyện') || t.includes('ồn ào') || t.includes('mất trật tự')) return 'nói chuyện/ồn ào';
+        if (t.includes('đồng phục') || t.includes('áo dài') || t.includes('bảng tên') || t.includes('phù hiệu') || t.includes('sơ vin') || t.includes('thể dục') || t.includes('tdtt')) return 'vi phạm đồng phục';
+        if (t.includes('điện thoại')) return 'sử dụng điện thoại';
+        if (t.includes('vệ sinh') || t.includes('xả rác') || t.includes('đổ rác')) return 'vệ sinh/trực nhật';
+        if (t.includes('chưa hoàn thành công việc được giao')) return 'chưa hoàn thành công việc được giao';
+        if (t.includes('gian lận')) {
+            if (t.includes('thường xuyên') || t.includes('miệng') || t.includes('15 phút') || t.includes('kttx')) return 'gian lận kttx';
+            return 'gian lận thi cử';
+        }
+        if (t.includes('vô lễ') || t.includes('xúc phạm')) return 'vô lễ/xúc phạm';
+        
+        // Cắt bỏ phần lý do trong ngoặc (nếu có) để lấy lõi
+        return t.replace(/\(.*?\)/g, '').replace(/\[.*?\]/g, '').split('-')[0].split(':')[0].trim();
+    }
 
     auth.onAuthStateChanged(user => {
         if (user) { currentUser = user; syncFromCloud(); } 
@@ -431,40 +456,110 @@
         });
     }
 
+    // BỘ MÁY XỬ LÝ TỪ KHÓA THÔNG MINH
+    function getActivityPoints(text) {
+        let txt = text.toLowerCase();
+        let match = txt.match(/\(\+(\d+)(đ|)\)/);
+        if (match) return parseInt(match[1]); // Quét ưu tiên tự gõ (+5đ), (+3đ)
+
+        if (['trải nghiệm', 'sử ca', 'kể chuyện', 'bác hồ', 'tiếng hát', 'stem', 'trại', 'phim ngắn', 'lớp trưởng', 'lớp phó'].some(k => txt.includes(k))) return 5;
+        if (['flashmob'].some(k => txt.includes(k))) return 4;
+        if (['dân vũ', 'báo tường', 'trang trí', 'tổ trưởng', 'bch', 'chi đoàn', 'giải nhất', 'hạng nhất'].some(k => txt.includes(k))) return 3;
+        if (['trực tuyến', 'avatar', 'tiết học tốt', 'hoa điểm 10', 'cắm hoa', 'nấu ăn', 'giải nhì', 'hạng nhì', 'thể thao', 'hội thao', 'bóng đá', 'bóng rổ', 'bóng chuyền', 'cầu lông', 'kéo co', 'bơi lội', 'điền kinh'].some(k => txt.includes(k))) return 2;
+
+        return 1; 
+    }
+
+    function getVpInfo(txt, instanceCount) {
+        let lowerTxt = txt.toLowerCase();
+        
+        // 1. Phạt đòn bẩy: Tái phạm cùng nội dung TỪ LẦN THỨ 4 TRỞ LÊN (Trừ 5 điểm)
+        if (instanceCount >= 4) return { type: 'repeated', deduct: 5, label: `Lặp lại lần ${instanceCount}` };
+        
+        // 2. Phạt phong trào: Trừ 1 điểm vào quỹ phong trào
+        if (lowerTxt.includes('chưa hoàn thành công việc được giao')) return { type: 'missed_pt', deduct: 1, label: 'Thiếu HĐ' };
+        
+        // 3. Phân biệt Gian lận (Thi cử -4đ vs KTTX -2đ)
+        if (lowerTxt.includes('gian lận')) {
+            if (lowerTxt.includes('thường xuyên') || lowerTxt.includes('miệng') || lowerTxt.includes('15 phút') || lowerTxt.includes('kttx')) {
+                return { type: 'normal', deduct: 2, label: 'Lỗi thường' };
+            }
+            return { type: 'severe', deduct: 4, label: 'Lỗi nặng' }; 
+        }
+        
+        // 4. Lỗi nặng từ hệ thống (-4đ)
+        if (SEVERE_KEYWORDS.some(kw => lowerTxt.includes(kw))) return { type: 'severe', deduct: 4, label: 'Lỗi nặng' };
+        
+        // 5. Lỗi Thi cử / KTTT (-3đ) - (Phải ngoại trừ các chữ liên quan đến KTTX)
+        if (['kttt', 'thi hk', 'kthk', 'kiểm tra', ' kt ', 'thi giữa kỳ', 'thi cuối kỳ'].some(kw => lowerTxt.includes(kw))) {
+            if (!lowerTxt.includes('kttx') && !lowerTxt.includes('thường xuyên') && !lowerTxt.includes('miệng') && !lowerTxt.includes('15 phút')) {
+                return { type: 'exam', deduct: 3, label: 'Lỗi thi cử' };
+            }
+        }
+        
+        // 6. Lỗi học tập / Lỗi nhỏ (-1đ)
+        if (MINOR_KEYWORDS.some(kw => lowerTxt.includes(kw))) return { type: 'minor', deduct: 1, label: 'Lỗi học tập' };
+        
+        // 7. Mặc định là lỗi nề nếp (-2đ)
+        return { type: 'normal', deduct: 2, label: 'Lỗi thường' };
+    }
+
     function calculatePoints(student) {
         let ptCount = student.logs.phongtrao.length;
         let cpCount = student.logs.vangCoPhep.length;
         let kpCount = student.logs.vangKhongPhep.length;
 
-        let deductVp = 0; let severeCount = 0; let standardVpCount = 0; let missedPtCount = 0;
+        let totalBonus = 0;
+        student.logs.phongtrao.forEach(pt => {
+            totalBonus += getActivityPoints(pt.text);
+        });
+
+        let deductVp = 0; let severeCount = 0; let normalVpCount = 0; let minorVpCount = 0; 
+        let examVpCount = 0; let repeatedVpCount = 0; let missedPtCount = 0;
         
+        let vpFreq = {};
+
         student.logs.vipham.forEach(log => {
-            let txt = log.text.toLowerCase();
-            if (txt.includes('chưa hoàn thành công việc được giao')) { missedPtCount++; } 
-            else {
-                standardVpCount++;
-                if (SEVERE_KEYWORDS.some(kw => txt.includes(kw))) { deductVp += 4; severeCount++; } 
-                else if (ACADEMIC_KEYWORDS.some(kw => txt.includes(kw))) { deductVp += 1; } 
-                else { deductVp += 2; }
+            let txt = log.text.toLowerCase().trim();
+            let normTxt = normalizeVpName(txt); // Sử dụng bộ chuẩn hóa để nhóm lỗi
+            vpFreq[normTxt] = (vpFreq[normTxt] || 0) + 1;
+            let info = getVpInfo(txt, vpFreq[normTxt]);
+            
+            if (info.type === 'missed_pt') { 
+                missedPtCount++; 
+            } else {
+                deductVp += info.deduct;
+                if (info.type === 'repeated') { repeatedVpCount++; }
+                else if (info.type === 'severe') { severeCount++; }
+                else if (info.type === 'exam') { examVpCount++; }
+                else if (info.type === 'minor') { minorVpCount++; }
+                else { normalVpCount++; }
             }
         });
 
         let deductKp = kpCount * 2; 
         let deductCp = Math.max(0, cpCount - 4) * 1; 
         let totalDeduct = deductVp + deductKp + deductCp;
-        let rawErrors = standardVpCount + kpCount + Math.max(0, cpCount - 4);
+        
+        // Chỉ những lỗi học tập, kiểm tra và vắng học mới được đưa vào danh sách cho phép bù trừ
+        let reducibleErrors = normalVpCount + minorVpCount + examVpCount + kpCount + Math.max(0, cpCount - 4);
+        
         let errorReduced = 0;
         if (ptCount >= 8) errorReduced = 2; else if (ptCount >= 5) errorReduced = 1;
 
-        let finalErrors = Math.max(0, rawErrors - errorReduced);
-        let totalBonus = (ptCount * 1) - (missedPtCount * 1); 
+        // Bù trừ chỉ áp dụng tối đa bằng số lỗi được phép bù trừ hiện có
+        let actualErrorReduced = Math.min(errorReduced, reducibleErrors);
+
+        // Lỗi lặp lại cố ý và lỗi nghiêm trọng KHÔNG THỂ BÙ TRỪ. Cộng ngược lỗi lặp lại cố ý vào bộ đếm cuối cùng.
+        let finalErrors = (reducibleErrors - actualErrorReduced) + repeatedVpCount;
+        totalBonus = Math.max(0, totalBonus - missedPtCount); 
         
-        // --- BASE SCORE 80 ---
+        // BASE SCORE 80
         let finalScore = Math.min(100, 80 - totalDeduct + totalBonus);
 
         let rank = ""; let rankClass = ""; let color = "";
         
-        // Điều kiện TỐT: Điểm từ 85 trở lên
+        // BỘ QUY TẮC XẾP LOẠI MỚI CHUẨN CHỈ
         if (severeCount > 0 || finalErrors > 10 || finalScore < 50) { rank = "CHƯA ĐẠT"; rankClass = "rank-chuadat"; color = "var(--danger)"; } 
         else if (finalErrors >= 7 || finalScore < 65) { rank = "ĐẠT"; rankClass = "rank-dat"; color = "var(--warning)"; } 
         else if (finalErrors >= 3 || finalScore < 85) { rank = "KHÁ"; rankClass = "rank-kha"; color = "var(--info-dark)"; } 
@@ -472,40 +567,43 @@
 
         let warningHtml = ""; let warningText = "";
         if (severeCount > 0 || finalScore < 50) { warningHtml = '<span class="status-badge status-alert">🚨 Báo Động</span>'; warningText = "Báo động"; } 
-        else if (finalScore < 65 || rawErrors >= 3 || totalDeduct > 4) { warningHtml = '<span class="status-badge status-warning">⚠️ Chú Ý</span>'; warningText = "Cần chú ý"; } 
+        else if (finalScore < 65 || finalErrors >= 3 || totalDeduct > 4) { warningHtml = '<span class="status-badge status-warning">⚠️ Chú Ý</span>'; warningText = "Cần chú ý"; } 
         else { warningHtml = '<span class="status-badge status-safe">✔️ Ổn Định</span>'; warningText = "Tốt"; }
 
         return {
             base: 80, deduct: totalDeduct, bonus: totalBonus, total: finalScore, rank: rank, rankClass: rankClass, color: color, 
-            severeCount: severeCount, rawErrors: rawErrors, errorReduced: errorReduced, finalErrors: finalErrors, warningHtml: warningHtml, warningText: warningText,
-            standardVpCount: standardVpCount, missedPtCount: missedPtCount, vpCount: student.logs.vipham.length, ptCount: ptCount, cpCount: cpCount, kpCount: kpCount
+            severeCount: severeCount, rawErrors: reducibleErrors + repeatedVpCount, errorReduced: errorReduced, actualErrorReduced: actualErrorReduced, finalErrors: finalErrors, warningHtml: warningHtml, warningText: warningText,
+            normalVpCount: normalVpCount, minorVpCount: minorVpCount, missedPtCount: missedPtCount, vpCount: student.logs.vipham.length, ptCount: ptCount, cpCount: cpCount, kpCount: kpCount
         };
     }
 
     function generateTeacherComment(scoreObj) {
         let klTxt = ""; let ptTxt = ""; let ccTxt = "";
 
-        if (scoreObj.severeCount > 0) { klTxt = "<span style='color:var(--danger); font-weight:bold;'>Đã vi phạm lỗi nghiêm trọng. Gia đình cần quan tâm nhắc nhở em nhiều hơn.</span>"; } 
+        if (scoreObj.severeCount > 0) { klTxt = "<span style='color:var(--danger); font-weight:bold;'>Đã vi phạm lỗi nghiêm trọng. Hệ thống không cho phép xóa bù trừ. Gia đình cần quan tâm nhắc nhở em nhiều hơn.</span>"; } 
         else if (scoreObj.rawErrors === 0) { klTxt = "Thực hiện rất tốt nội quy của trường, lớp; có ý thức kỷ luật và tự giác cao."; } 
-        else if (scoreObj.rawErrors <= 3) { klTxt = "Cơ bản chấp hành nội quy, tuy nhiên đôi lúc còn vi phạm nhỏ, cần chú ý khắc phục."; } 
-        else { klTxt = `<span style='color:var(--danger); font-weight:bold;'>Thường xuyên vi phạm nội quy (${scoreObj.rawErrors} lỗi). Bị khống chế hạ bậc xếp loại.</span>`; }
+        else if (scoreObj.rawErrors < 3) { klTxt = "Cơ bản chấp hành nội quy, tuy nhiên đôi lúc còn vi phạm nhỏ, cần chú ý khắc phục."; } 
+        else { klTxt = `<span style='color:var(--danger); font-weight:bold;'>Thường xuyên vi phạm nội quy (${scoreObj.rawErrors} lỗi gốc). Bị khống chế hạ bậc xếp loại.</span>`; }
 
         if (scoreObj.ptCount === 0 && scoreObj.missedPtCount === 0) {
-            ptTxt = "Chưa tích cực tham gia các phong trào chung. Cần chú ý vì phong trào giúp cải thiện kết quả rèn luyện.";
+            ptTxt = "Chưa tham gia phong trào. (Học sinh cần tích lũy điểm phong trào để đạt mức TỐT).";
         } else {
             let posTxt = "";
-            if (scoreObj.ptCount >= 5) posTxt = `<span style='color:var(--info-dark); font-weight:bold;'>Năng nổ, nhiệt tình tham gia HĐ (${scoreObj.ptCount} lần). Đã được hệ thống ghi nhận, có thể dùng để xem xét xóa ${scoreObj.errorReduced} lỗi vi phạm theo quy định.</span>`;
+            if (scoreObj.ptCount >= 5 && scoreObj.actualErrorReduced > 0) posTxt = `<span style='color:var(--info-dark); font-weight:bold;'>Năng nổ, nhiệt tình tham gia HĐ (${scoreObj.ptCount} lần). Hệ thống đã tiến hành bù trừ và tự động xóa ${scoreObj.actualErrorReduced} lỗi vi phạm thông thường.</span>`;
+            else if (scoreObj.ptCount >= 5) posTxt = `<span style='color:var(--info-dark); font-weight:bold;'>Năng nổ, nhiệt tình tham gia HĐ (${scoreObj.ptCount} lần). Vì không mắc lỗi thông thường, em được bảo lưu toàn bộ điểm cộng thưởng. (Lưu ý: Hệ thống không áp dụng xóa lỗi nếu vi phạm là lỗi nghiêm trọng/lặp lại cố ý).</span>`;
             else if (scoreObj.ptCount > 0) posTxt = `Có tham gia phong trào, hoạt động của lớp (${scoreObj.ptCount} lần).`;
+            
             let negTxt = "";
             if (scoreObj.missedPtCount > 0) negTxt = `<span style='color:var(--danger); font-weight:bold;'>Tuy nhiên, em còn thiếu trách nhiệm, chưa hoàn thành ${scoreObj.missedPtCount} nhiệm vụ được phân công.</span>`;
+            
             ptTxt = posTxt + (posTxt && negTxt ? " " : "") + negTxt;
             if (!posTxt && negTxt) ptTxt = negTxt + " Cần nghiêm túc chấn chỉnh lại thái độ tham gia hoạt động tập thể.";
         }
 
         const totalAbs = scoreObj.cpCount + scoreObj.kpCount;
         if (totalAbs === 0) ccTxt = "Đảm bảo chuyên cần, đi học đầy đủ.";
-        else if (scoreObj.kpCount > 0) ccTxt = `<span style='color:var(--danger); font-weight:bold;'>Đi học chưa chuyên cần, còn vắng không phép ${scoreObj.kpCount} buổi.</span>`;
-        else if (scoreObj.cpCount > 4) ccTxt = `<span style='color:var(--warning); font-weight:bold;'>Nghỉ học có phép khá nhiều (${scoreObj.cpCount} buổi) làm ảnh hưởng kết quả rèn luyện.</span>`;
+        else if (scoreObj.kpCount > 0) ccTxt = `<span style='color:var(--danger); font-weight:bold;'>Đi học chưa chuyên cần, còn vắng KHÔNG phép ${scoreObj.kpCount} buổi.</span>`;
+        else if (scoreObj.cpCount > 4) ccTxt = `<span style='color:var(--warning); font-weight:bold;'>Nghỉ học có phép khá nhiều (${scoreObj.cpCount} buổi) làm ảnh hưởng điểm rèn luyện.</span>`;
         else ccTxt = `Đi học cơ bản đầy đủ, có vắng ${scoreObj.cpCount} buổi.`;
 
         return `<p style="margin:0 0 8px 0;"><strong>• Về kỷ luật:</strong> ${klTxt}</p><p style="margin:0 0 8px 0;"><strong>• Về chuyên cần:</strong> ${ccTxt}</p><p style="margin:0;"><strong>• Về phong trào:</strong> ${ptTxt}</p>`;
@@ -600,7 +698,8 @@
     function renderLogLists(student) {
         const sc = calculatePoints(student);
         
-        document.getElementById('dt-count-vp').innerText = sc.standardVpCount + sc.kpCount + sc.cpCount;
+        // Render tổng lỗi bao gồm mọi loại lỗi trừ thiếu phong trào
+        document.getElementById('dt-count-vp').innerText = sc.rawErrors;
         let ptSummaryStr = sc.ptCount;
         if(sc.missedPtCount > 0) ptSummaryStr += ` (Thiếu ${sc.missedPtCount})`;
         document.getElementById('dt-count-pt').innerText = ptSummaryStr;
@@ -622,27 +721,42 @@
 
         const warnText = document.getElementById('rl-severe-warning');
         if (sc.severeCount > 0) { warnText.innerText = "(Bị khống chế hạ bậc do dính Lỗi Nghiêm Trọng)"; warnText.style.display = 'block'; } 
-        else if (sc.rawErrors >= 3 && sc.rank !== "TỐT") { warnText.innerText = `(Bị khống chế hạ bậc do vi phạm quá nhiều: ${sc.rawErrors} lỗi)`; warnText.style.display = 'block'; } 
+        else if (sc.finalErrors >= 3 && sc.rank !== "TỐT") { warnText.innerText = `(Bị khống chế hạ bậc do vi phạm quá nhiều: ${sc.finalErrors} lỗi chưa bù trừ)`; warnText.style.display = 'block'; } 
         else { warnText.style.display = 'none'; }
 
         document.getElementById('rl-nhanxet').innerHTML = generateTeacherComment(sc);
         document.getElementById('pr-nhanxet').innerHTML = generateTeacherComment(sc);
 
-        const standardVpLogs = student.logs.vipham.filter(log => !log.text.toLowerCase().includes('chưa hoàn thành công việc được giao'));
+        // Map và gán số đếm lặp lại cho từng lỗi để hiển thị trực quan trên giao diện
+        let vpFreq = {};
+        let processedVpLogs = student.logs.vipham.map(log => {
+            let txt = log.text.toLowerCase().trim();
+            let normTxt = normalizeVpName(txt);
+            vpFreq[normTxt] = (vpFreq[normTxt] || 0) + 1;
+            let info = getVpInfo(txt, vpFreq[normTxt]);
+            return { ...log, info: info, instanceCount: vpFreq[normTxt] };
+        });
+
+        const standardVpLogs = processedVpLogs.filter(log => log.info.type !== 'missed_pt');
         const vpList = document.getElementById('rl-vipham');
         let vpHTML = ""; let prVpHTML = ""; let vpIndex = 1;
         
-        if (sc.standardVpCount > 0) {
+        if (standardVpLogs.length > 0) {
             vpHTML += standardVpLogs.map(log => {
-                let txt = log.text.toLowerCase();
-                let isSevere = SEVERE_KEYWORDS.some(kw => txt.includes(kw));
-                let isAcademic = !isSevere && ACADEMIC_KEYWORDS.some(kw => txt.includes(kw));
-                let iconStr = isSevere ? '<span class="p-icon-check" style="color:var(--danger); font-size:18px;">🔥</span>' : (isAcademic ? '<span class="p-icon-check" style="color:var(--warning); font-size:16px;">📚</span>' : '<span class="p-icon-check" style="color:var(--danger);">⚠️</span>');
-                let ptDeduct = isSevere ? '(-4đ)' : (isAcademic ? '(-1đ)' : '(-2đ)');
+                let info = log.info;
+                let iconStr = '⚠️';
+                if (info.type === 'severe') iconStr = '🔥';
+                else if (info.type === 'exam') iconStr = '📝';
+                else if (info.type === 'minor') iconStr = '📚';
+                else if (info.type === 'repeated') iconStr = '🛑';
+                
+                let ptDeduct = `(-${info.deduct}đ)`;
+                if(info.type === 'repeated') ptDeduct = `<b style="color:var(--danger)">(-5đ) [Tái phạm lần ${log.instanceCount}]</b>`;
+                else ptDeduct = `<b style="color:var(--danger)">${ptDeduct}</b>`;
                 
                 prVpHTML += `<tr><td class="text-center">${vpIndex++}</td><td>${log.text}</td><td class="text-center">${log.date}</td></tr>`;
 
-                return `<div class="p-list-item"><div class="p-list-content">${iconStr} <div>${log.text} <b style="color:var(--danger)">${ptDeduct}</b><span>(${log.date})</span></div></div><button class="btn-del-item" onclick="deleteLog('vipham', ${log.id})" title="Xóa dữ liệu">✕</button></div>`;
+                return `<div class="p-list-item"><div class="p-list-content"><span class="p-icon-check" style="font-size:16px;">${iconStr}</span> <div>${log.text} ${ptDeduct}<span>(${log.date})</span></div></div><button class="btn-del-item" onclick="deleteLog('vipham', ${log.id})" title="Xóa dữ liệu">✕</button></div>`;
             }).join('');
         }
         if (sc.kpCount > 0) {
@@ -663,13 +777,14 @@
         document.getElementById('pr-tb-vp').innerHTML = prVpHTML === "" ? '<tr><td colspan="3" class="text-center">Không ghi nhận vi phạm nào.</td></tr>' : prVpHTML;
 
         const ptList = document.getElementById('rl-phongtrao');
-        const missedPtLogs = student.logs.vipham.filter(log => log.text.toLowerCase().includes('chưa hoàn thành công việc được giao'));
+        const missedPtLogs = processedVpLogs.filter(log => log.info.type === 'missed_pt');
         let ptHTML = ""; let prPtHTML = ""; let ptIndex = 1;
         
         if (sc.ptCount > 0) {
             ptHTML += student.logs.phongtrao.map(log => {
                 prPtHTML += `<tr><td class="text-center">${ptIndex++}</td><td>${log.text}</td><td class="text-center">${log.date}</td></tr>`;
-                return `<div class="p-list-item"><div class="p-list-content"><span class="p-icon-check" style="color:var(--info-dark);">🏆</span> <div>${log.text} <b style="color:var(--info-dark);">(+1đ)</b><span>(${log.date})</span></div></div><button class="btn-del-item" onclick="deleteLog('phongtrao', ${log.id})" title="Xóa dữ liệu">✕</button></div>`;
+                let ptValue = getActivityPoints(log.text);
+                return `<div class="p-list-item"><div class="p-list-content"><span class="p-icon-check" style="color:var(--info-dark);">🏆</span> <div>${log.text} <b style="color:var(--info-dark);">(+${ptValue}đ)</b><span>(${log.date})</span></div></div><button class="btn-del-item" onclick="deleteLog('phongtrao', ${log.id})" title="Xóa dữ liệu">✕</button></div>`;
             }).join('');
         }
         if (sc.missedPtCount > 0) {
@@ -703,19 +818,35 @@
 
     function exportToExcel() {
         if (currentDetailIndex === -1) return;
-        const s = studentsData[currentDetailIndex];
-        let standardVpLogs = s.logs.vipham.filter(log => !log.text.toLowerCase().includes('chưa hoàn thành công việc được giao'));
-        let missedPtLogs = s.logs.vipham.filter(log => log.text.toLowerCase().includes('chưa hoàn thành công việc được giao'));
-        let ptCombined = [...s.logs.phongtrao.map(x=> `(+) ${x.text.replace(/<[^>]*>?/gm, '')} - ${x.date}`), ...missedPtLogs.map(x=> `(-) ${x.text} - ${x.date}`)];
-        let mergedAbsences = [...s.logs.vangCoPhep.map(x=>`(Có Phép) ${x.text} - ${x.date}`), ...s.logs.vangKhongPhep.map(x=>`(KHÔNG PHÉP) ${x.text} - ${x.date}`)];
+        const student = studentsData[currentDetailIndex];
+        
+        let vpFreq = {};
+        let processedVpLogs = student.logs.vipham.map(log => {
+            let txt = log.text.toLowerCase().trim();
+            let normTxt = normalizeVpName(txt);
+            vpFreq[normTxt] = (vpFreq[normTxt] || 0) + 1;
+            let info = getVpInfo(txt, vpFreq[normTxt]);
+            return { ...log, info: info, instanceCount: vpFreq[normTxt] };
+        });
+
+        let standardVpLogs = processedVpLogs.filter(log => log.info.type !== 'missed_pt');
+        let missedPtLogs = processedVpLogs.filter(log => log.info.type === 'missed_pt');
+        
+        let ptCombined = [...student.logs.phongtrao.map(x=> `(+) ${x.text.replace(/<[^>]*>?/gm, '')} (+${getActivityPoints(x.text)}đ) - ${x.date}`), ...missedPtLogs.map(x=> `(-) ${x.text} (-1đ) - ${x.date}`)];
+        let mergedAbsences = [...student.logs.vangCoPhep.map(x=>`(Có Phép) ${x.text} - ${x.date}`), ...student.logs.vangKhongPhep.map(x=>`(KHÔNG PHÉP) ${x.text} - ${x.date}`)];
 
         const maxLen = Math.max(standardVpLogs.length, ptCombined.length, mergedAbsences.length);
         let excelData = [];
         
         for(let i=0; i<maxLen; i++) {
+            let vpText = "";
+            if (standardVpLogs[i]) {
+                let log = standardVpLogs[i];
+                vpText = `${log.text} (-${log.info.deduct}đ) (${log.date})`;
+            }
             excelData.push({
                 "STT": i + 1,
-                "Lịch Sử Vi Phạm Nề Nếp": standardVpLogs[i] ? `${standardVpLogs[i].text} (${standardVpLogs[i].date})` : "",
+                "Lịch Sử Vi Phạm Nề Nếp": vpText,
                 "Hoạt Động Phong Trào (Thừa / Thiếu)": ptCombined[i] || "",
                 "Lịch Sử Nghỉ Học": mergedAbsences[i] || ""
             });
@@ -725,7 +856,7 @@
         const ws = XLSX.utils.json_to_sheet(excelData);
         ws['!cols'] = [{wch: 5}, {wch: 45}, {wch: 45}, {wch: 45}];
         const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "ChiTiet");
-        const safeName = s["Họ và Tên"].replace(/[^a-zA-Z0-9 ]/g, "").trim().replace(/\s+/g, "_");
+        const safeName = student["Họ và Tên"].replace(/[^a-zA-Z0-9 ]/g, "").trim().replace(/\s+/g, "_");
         XLSX.writeFile(wb, `Ca_Nhan_Ren_Luyen_${safeName}.xlsx`);
     }
 
