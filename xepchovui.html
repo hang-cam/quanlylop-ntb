@@ -15,7 +15,7 @@
             --info: #0ea5e9; --info-dark: #0284c7; --border-color: #e2e8f0; 
             --primary-orange: #f97316; --dark-orange: #ea580c; --light-orange: #fff7ed;
             --bg-body: #f8fafc; --text-main: #1e293b; --success: #10b981;
-            --purple: #8b5cf6;
+            --purple: #8b5cf6; --danger: #ef4444;
         }
         
         body { 
@@ -28,21 +28,42 @@
         .main-container { display: flex; gap: 20px; max-width: 1450px; margin: 0 auto; align-items: flex-start; transition: all 0.3s ease; }
 
         .sidebar { 
-            flex: 0 0 280px; background: white; border: 2px solid var(--border-color); 
+            flex: 0 0 300px; background: white; border: 2px solid var(--border-color); 
             border-radius: 16px; padding: 20px; position: sticky; top: 20px; 
             box-shadow: 0 10px 20px rgba(0,0,0,0.03); transition: all 0.3s ease; overflow: hidden;
+            max-height: 95vh; display: flex; flex-direction: column;
         }
         .sidebar.collapsed { flex: 0 0 50px; padding: 15px 10px; background: #fff7ed; border-color: #fdba74; cursor: pointer; }
         .sidebar.collapsed * { display: none; } 
         .sidebar.collapsed::after {
-            content: '📋 Bật Lại Danh Sách Lớp'; display: block; writing-mode: vertical-rl;
+            content: '📋 Bật Lại Bảng Điểu Khiển'; display: block; writing-mode: vertical-rl;
             text-orientation: mixed; color: var(--dark-orange); font-weight: 800;
-            font-size: 13px; text-align: center; height: 180px; margin: auto;
+            font-size: 13px; text-align: center; height: 200px; margin: auto;
         }
 
-        .sidebar h3 { margin-top: 0; color: var(--info); font-weight: 900; text-transform: uppercase; font-size: 16px; border-bottom: 2px dashed #e2e8f0; padding-bottom: 10px;}
-        .student-list { list-style: none; padding: 0; margin: 0; max-height: 500px; overflow-y: auto; }
-        .student-list li { padding: 10px 5px; border-bottom: 1px solid #f1f5f9; font-size: 13.5px; display: flex; justify-content: space-between; font-weight: 700; color: #334155;}
+        .sidebar h3 { margin-top: 0; color: var(--info); font-weight: 900; text-transform: uppercase; font-size: 15px; border-bottom: 2px dashed #e2e8f0; padding-bottom: 10px; margin-bottom: 15px;}
+        
+        /* Textarea Dán Danh Sách */
+        textarea { width: 100%; height: 80px; padding: 10px; border-radius: 10px; border: 2px dashed #cbd5e1; font-family: inherit; font-size: 13px; outline: none; resize: vertical; box-sizing: border-box; }
+        textarea:focus { border-color: var(--primary-orange); background: var(--light-orange); }
+        .btn-update-list { width: 100%; padding: 10px; background: var(--text-main); color: white; border: none; border-radius: 10px; font-weight: 800; cursor: pointer; margin-top: 8px; transition: 0.2s;}
+        .btn-update-list:hover { background: var(--primary-orange); }
+
+        /* Ghép cặp cố định */
+        .fixed-pair-box { background: #f1f5f9; padding: 15px; border-radius: 12px; margin-top: 15px; border: 1px solid #cbd5e1;}
+        .fixed-pair-box h4 { margin: 0 0 10px 0; font-size: 13px; color: var(--text-main); text-transform: uppercase; font-weight: 900;}
+        .fp-selects { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;}
+        .fp-selects select { padding: 8px; border-radius: 8px; border: 1px solid #cbd5e1; font-family: inherit; font-size: 13px; font-weight: 600; outline: none;}
+        .btn-pair { background: var(--info-dark); color: white; border: none; padding: 8px; border-radius: 8px; font-weight: 800; cursor: pointer; width: 100%; transition: 0.2s;}
+        .btn-pair:hover { background: var(--info); }
+        .fp-list { list-style: none; padding: 0; margin: 10px 0 0 0; max-height: 100px; overflow-y: auto;}
+        .fp-item { background: white; border: 1px solid #cbd5e1; padding: 6px 10px; border-radius: 8px; font-size: 12.5px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;}
+        .fp-item button { background: none; border: none; color: var(--danger); font-weight: bold; cursor: pointer; font-size: 14px;}
+
+        /* Danh sách lớp */
+        .student-list-container { flex: 1; overflow-y: auto; margin-top: 15px; border-top: 2px dashed #e2e8f0; padding-top: 15px; }
+        .student-list { list-style: none; padding: 0; margin: 0; }
+        .student-list li { padding: 8px 5px; border-bottom: 1px solid #f1f5f9; font-size: 13px; display: flex; justify-content: space-between; font-weight: 700; color: #334155;}
         
         .content { flex: 1; transition: all 0.3s ease; }
         .classroom-layout { background: white; border: 2px solid var(--border-color); border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);}
@@ -68,6 +89,7 @@
         .seat-nu { background-color: #fdf2f8; color: #be185d; border-color: #fbcfe8; }
         .seat-empty { background: #f1f5f9; border: 2px dashed #cbd5e1; color: #94a3b8; flex: 1; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold;}
 
+        /* Hiệu ứng Vòng quay Tên */
         .rolling-text { position: absolute; font-size: 13px; color: #333; font-weight: bold; width: 100%; white-space: nowrap; animation: fastRoll 0.1s linear infinite; }
         @keyframes fastRoll { 0% { transform: translateY(15px); opacity: 0; } 50% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-15px); opacity: 0; } }
         
@@ -89,7 +111,7 @@
         .btn-action { padding: 12px 20px; border: none; border-radius: 12px; cursor: pointer; font-weight: 900; color: white; font-size: 14.5px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: 0.2s; display: flex; align-items: center; gap: 8px; font-family: inherit;}
         .btn-action:hover { transform: translateY(-3px); filter: brightness(1.1); }
         
-        .btn-back-main { background: #f1f5f9; color: var(--text-main); border: 1px solid var(--border-color); text-decoration: none; padding: 12px 20px; border-radius: 12px; font-weight: 800; font-size: 14.5px; transition: 0.2s; display: flex; align-items: center; gap: 8px;}
+        .btn-back-main { background: #f1f5f9; color: var(--text-main); border: 1px solid var(--border-color); text-decoration: none; padding: 12px 20px; border-radius: 12px; font-weight: 900; font-size: 14.5px; transition: 0.2s; display: flex; align-items: center; gap: 8px;}
         .btn-back-main:hover { background: #e2e8f0; color: var(--primary-orange); border-color: #cbd5e1;}
 
         ::-webkit-scrollbar { width: 6px; }
@@ -99,26 +121,47 @@
 <body>
 
     <div class="main-container">
+        <!-- BẢNG ĐIỀU KHIỂN BÊN TRÁI -->
         <div class="sidebar" id="sidebarPanel" onclick="toggleSidebar(event)">
-            <h3>📋 Danh Sách Lớp</h3>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; margin-top: 15px;">
-                <span style="font-size: 13px; font-weight: bold; color: var(--text-muted);">Đã kết nối dữ liệu:</span>
-                <span style="background: var(--success); color: white; padding: 4px 12px; border-radius: 12px; font-weight: 900; font-size: 13px;" id="totalCount">0 HS</span>
+            <h3>📋 Cài Đặt Danh Sách Lớp</h3>
+            
+            <!-- Khu vực nhập danh sách -->
+            <textarea id="pasteArea" placeholder="Dán danh sách (Họ tên - Giới tính) từ Excel vào đây..."></textarea>
+            <button class="btn-update-list" onclick="importFromPaste()">📥 Cập Nhật Danh Sách</button>
+
+            <!-- Khu vực Ghép cặp cố định -->
+            <div class="fixed-pair-box">
+                <h4>💞 Chỉ Định Ngồi Cùng Nhau</h4>
+                <div class="fp-selects">
+                    <select id="fp1"><option value="">-- Chọn Học Sinh 1 --</option></select>
+                    <select id="fp2"><option value="">-- Chọn Học Sinh 2 --</option></select>
+                    <button class="btn-pair" onclick="addFixedPair()">Gắn Kết 🔒</button>
+                </div>
+                <ul class="fp-list" id="fixedPairsList"></ul>
             </div>
-            <ul class="student-list" id="studentListUI">
-                <li style="color: #94a3b8; font-style: italic;">Đang tải danh sách...</li>
-            </ul>
+
+            <!-- Khu vực hiển thị danh sách -->
+            <div class="student-list-container">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <span style="font-size: 13px; font-weight: bold; color: var(--text-muted);">Đã kết nối:</span>
+                    <span style="background: var(--success); color: white; padding: 4px 12px; border-radius: 12px; font-weight: 900; font-size: 13px;" id="totalCount">0 HS</span>
+                </div>
+                <ul class="student-list" id="studentListUI">
+                    <li style="color: #94a3b8; font-style: italic;">Đang tải danh sách...</li>
+                </ul>
+            </div>
         </div>
 
+        <!-- BẢNG SƠ ĐỒ LỚP -->
         <div class="content">
             <div class="action-bar">
                 <div style="display: flex; gap: 12px; align-items: center;">
-                    <!-- Hệ sinh thái Xếp chỗ -->
-                    <select id="mixMode" class="mode-select">
-                        <option value="same">👫 Cùng Giới Tính (Mặc định)</option>
+                    <!-- Dropdown Chế độ Vui Nhộn -->
+                    <select id="mixMode" class="mode-select" title="Chọn quy tắc xếp chỗ">
+                        <option value="same">👫 Cùng Giới Tính (Ưu tiên)</option>
                         <option value="mixed">💑 Nam - Nữ Ghép Đôi</option>
-                        <option value="numerology">🔮 Thần Số Học (Tương Hợp)</option>
-                        <option value="battu">☯️ Tử Vi / Bát Tự (Tam Hợp)</option>
+                        <option value="numerology">🔮 Thần Số Học (Tần số năng lượng)</option>
+                        <option value="battu">☯️ Tử Vi / Bát Tự (Hợp tuổi)</option>
                         <option value="split">⚔️ Chia Phe Nam - Nữ</option>
                         <option value="random">🌪️ Hỗn Loạn 100%</option>
                     </select>
@@ -129,7 +172,7 @@
                     <button class="btn-action" style="background: linear-gradient(135deg, #ec4899, #be185d);" onclick="revealAllWithSpin()">
                         🎡 Vòng Quay
                     </button>
-                    <button class="btn-action" style="background: linear-gradient(135deg, #4f46e5, #3730a3);" onclick="revealAllQuick()">
+                    <button class="btn-action" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);" onclick="revealAllQuick()">
                         👀 Mở Nhanh
                     </button>
                 </div>
@@ -138,7 +181,7 @@
                     <button class="btn-action" style="background: linear-gradient(135deg, var(--success), #059669);" onclick="syncLayoutToMain()">
                         💾 LƯU SƠ ĐỒ LỚP
                     </button>
-                    <a href="sodolop.html" class="btn-back-main">⬅ Trở Về</a>
+                    <a href="sodolop.html" class="btn-back-main">⬅ Trở Về Sơ Đồ</a>
                 </div>
             </div>
 
@@ -180,6 +223,7 @@
 
         let currentUser = null;
         let studentsData = [];
+        let fixedPairs = []; // Lưu trữ các cặp chỉ định ngồi chung
         let shuffledSecretList = [];
         let spinIntervals = [];
 
@@ -197,16 +241,90 @@
             } else { loadStudents(); }
         });
 
+        // TẢI HOẶC NHẬP DANH SÁCH
         function loadStudents() {
             const rawData = localStorage.getItem('DuLieu_Lop11_Master');
             if (rawData) {
                 studentsData = JSON.parse(rawData);
-                renderStudentList(); initEmptyGrid();
+                renderStudentList();
+                populateFP();
+                initEmptyGrid();
             } else {
-                document.getElementById('studentListUI').innerHTML = "<li style='color:var(--danger);'>Chưa có dữ liệu học sinh trong hệ thống.</li>";
+                document.getElementById('studentListUI').innerHTML = "<li style='color:var(--danger);'>Chưa có dữ liệu. Vui lòng dán danh sách vào ô phía trên.</li>";
             }
         }
 
+        function importFromPaste() {
+            const text = document.getElementById('pasteArea').value.trim();
+            if (!text) {
+                loadStudents(); // Nếu để trống và bấm cập nhật thì lấy lại từ CSDL
+                alert("Đã khôi phục lại danh sách gốc từ hệ thống!");
+                return;
+            }
+
+            const lines = text.split('\n');
+            let newStudents = [];
+
+            lines.forEach(line => {
+                let cleanLine = line.trim();
+                if (!cleanLine) return;
+                let parts = cleanLine.split(/\t+| {2,}/);
+                let name = parts.length >= 2 ? parts[0].trim() : cleanLine;
+                let gender = parts.length >= 2 ? parts[parts.length - 1].trim() : "Khác";
+
+                let gtLower = gender.toLowerCase();
+                if (gtLower.includes('nam')) gender = 'Nam';
+                else if (gtLower.includes('nữ') || gtLower.includes('nu')) gender = 'Nữ';
+
+                newStudents.push({ "Họ và Tên": name, "Giới Tính": gender, "Ngày Sinh": "01/01/2010" });
+            });
+
+            if (newStudents.length > 0) {
+                studentsData = newStudents;
+                renderStudentList();
+                populateFP();
+                initEmptyGrid();
+                fixedPairs = []; renderFixedPairs(); // Reset cặp cố định khi đổi danh sách mới
+                document.getElementById('pasteArea').value = '';
+                alert("Đã cập nhật danh sách tùy chỉnh! Hãy bấm 'TẠO HỘP MÙ' để chơi.");
+            }
+        }
+
+        // TÍNH NĂNG GHÉP CẶP CỐ ĐỊNH
+        function populateFP() {
+            let opts = '<option value="">-- Chọn Học Sinh --</option>';
+            studentsData.forEach((s, i) => opts += `<option value="${i}">${i+1}. ${s["Họ và Tên"]}</option>`);
+            document.getElementById('fp1').innerHTML = opts;
+            document.getElementById('fp2').innerHTML = opts;
+        }
+
+        function addFixedPair() {
+            let v1 = document.getElementById('fp1').value;
+            let v2 = document.getElementById('fp2').value;
+            if(v1 === "" || v2 === "") return alert("Vui lòng chọn đủ 2 học sinh!");
+            if(v1 === v2) return alert("Không thể ghép 1 người với chính mình!");
+            if(fixedPairs.some(p => p.includes(v1) || p.includes(v2))) return alert("Học sinh này đã được gắn kết với người khác rồi!");
+            
+            fixedPairs.push([v1, v2]);
+            document.getElementById('fp1').value = ""; document.getElementById('fp2').value = "";
+            renderFixedPairs();
+        }
+
+        function removeFixedPair(idx) {
+            fixedPairs.splice(idx, 1);
+            renderFixedPairs();
+        }
+
+        function renderFixedPairs() {
+            const listUI = document.getElementById('fixedPairsList');
+            listUI.innerHTML = fixedPairs.map((p, idx) => {
+                let n1 = studentsData[p[0]]["Họ và Tên"];
+                let n2 = studentsData[p[1]]["Họ và Tên"];
+                return `<li class="fp-item"><span>${n1} ❤️ ${n2}</span> <button onclick="removeFixedPair(${idx})" title="Hủy gắn kết">✕</button></li>`;
+            }).join('');
+        }
+
+        // GIAO DIỆN & CÔNG CỤ CƠ BẢN
         function toggleSidebar(e) {
             const sidebar = document.getElementById('sidebarPanel');
             if (sidebar.classList.contains('collapsed')) { sidebar.classList.remove('collapsed'); e.stopPropagation(); }
@@ -220,7 +338,7 @@
 
         function initEmptyGrid() {
             const grid = document.getElementById('deskGrid'); let html = '';
-            // Render chuẩn khớp với logic Sơ đồ lớp (Bàn 6 ở trên, Bàn 1 ở dưới cùng)
+            // Render chuẩn khớp với logic Sơ đồ lớp gốc (Bàn 6 ở trên cùng, Bàn 1 ở dưới cùng)
             for(let r = 0; r < 6; r++) { 
                 for(let c = 0; c < 4; c++) {
                     html += `<div class="desk-item"><span class="desk-label">Bàn ${6 - r}</span><div class="seat-empty">Trống</div><div class="seat-empty">Trống</div></div>`;
@@ -239,16 +357,12 @@
             }).join('');
         }
 
-        // ============================================
         // LOGIC HUYỀN HỌC & TÂM LINH
-        // ============================================
         function getNumerology(dateStr) {
             if(!dateStr) return Math.floor(Math.random() * 9) + 2;
             let sum = dateStr.replace(/\D/g, '').split('').reduce((a,b)=>a+parseInt(b), 0);
-            while(sum > 9 && sum !== 11 && sum !== 22) {
-                sum = sum.toString().split('').reduce((a,b)=>a+parseInt(b), 0);
-            }
-            return sum; // Trả về con số chủ đạo
+            while(sum > 9 && sum !== 11 && sum !== 22) { sum = sum.toString().split('').reduce((a,b)=>a+parseInt(b), 0); }
+            return sum;
         }
 
         function getBaziGroup(dateStr) {
@@ -256,29 +370,39 @@
             let parts = dateStr.split('/');
             if(parts.length < 2) return Math.floor(Math.random() * 5);
             let day = parseInt(parts[0]); let month = parseInt(parts[1]);
-            return (day + month) % 5; // Giả lập 5 nhóm ngũ hành Tương sinh
+            return (day + month) % 5; 
         }
 
+        // TẠO HỘP MÙ KÈM CÁC CHẾ ĐỘ NÂNG CAO
         function startBlindBoxGame() {
             if(studentsData.length === 0) return alert("Chưa có danh sách lớp để tạo Hộp mù!");
 
             document.getElementById('sidebarPanel').classList.add('collapsed');
-            
             let mode = document.getElementById('mixMode').value;
-            let boys = []; let girls = []; let all = [];
             
-            studentsData.forEach((s, index) => {
-                let sObj = { ...s, orgIdx: index };
-                all.push(sObj);
-                let gt = (s["Giới Tính"] || "").toLowerCase();
-                if(gt.includes('nam')) boys.push(sObj); else girls.push(sObj);
+            let allPool = studentsData.map((s, idx) => ({ ...s, orgIdx: idx }));
+            const shuffleArray = (arr) => { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } };
+
+            // 1. Tách các Cặp cố định ra trước
+            let predefinedPairs = [];
+            let fixedIndices = new Set();
+            fixedPairs.forEach(pair => {
+                let s1 = allPool.find(s => s.orgIdx == pair[0]);
+                let s2 = allPool.find(s => s.orgIdx == pair[1]);
+                if(s1 && s2) {
+                    predefinedPairs.push([s1, s2]);
+                    fixedIndices.add(s1.orgIdx); fixedIndices.add(s2.orgIdx);
+                }
             });
 
-            const shuffleArray = (arr) => { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } };
-            
+            // 2. Các học sinh còn lại đem đi xử lý theo Mode
+            let remainingPool = allPool.filter(s => !fixedIndices.has(s.orgIdx));
+            let boys = remainingPool.filter(s => (s["Giới Tính"]||"").toLowerCase().includes('nam'));
+            let girls = remainingPool.filter(s => !(s["Giới Tính"]||"").toLowerCase().includes('nam'));
+
             let columns = [[], [], [], []]; 
 
-            // CÁC CHẾ ĐỘ GHÉP CẶP
+            // XỬ LÝ MODE
             if (mode === 'split') {
                 shuffleArray(boys); shuffleArray(girls);
                 let bPairs = []; let gPairs = [];
@@ -288,57 +412,47 @@
                 if(girls.length === 1) gPairs.push([girls.pop(), null]);
                 
                 shuffleArray(bPairs); shuffleArray(gPairs);
-                bPairs.forEach((p, i) => columns[i % 2].push(p));
-                gPairs.forEach((p, i) => columns[(i % 2) + 2].push(p));
-
-            } else if (mode === 'numerology') {
-                // Nhóm theo Thần số học
-                let numGroups = {};
-                all.forEach(s => {
-                    let num = getNumerology(s["Ngày Sinh"]);
-                    if(!numGroups[num]) numGroups[num] = [];
-                    numGroups[num].push(s);
-                });
-                let pairs = [];
-                for(let key in numGroups) {
-                    let group = numGroups[key]; shuffleArray(group);
-                    while(group.length >= 2) pairs.push([group.pop(), group.pop()]);
-                    if(group.length === 1) all.push(group.pop()); // Đẩy phần lẻ ra xếp chung
-                }
-                shuffleArray(all);
-                while(all.length >= 2) pairs.push([all.pop(), all.pop()]);
-                if(all.length === 1) pairs.push([all.pop(), null]);
                 
-                shuffleArray(pairs);
-                let colIdx = 0; pairs.forEach(p => { columns[colIdx % 4].push(p); colIdx++; });
-
-            } else if (mode === 'battu') {
-                // Nhóm theo Ngũ hành / Tam hợp
-                let baziGroups = {};
-                all.forEach(s => {
-                    let bz = getBaziGroup(s["Ngày Sinh"]);
-                    if(!baziGroups[bz]) baziGroups[bz] = [];
-                    baziGroups[bz].push(s);
+                // Nhồi cặp cố định vào trước để giữ chỗ
+                predefinedPairs.forEach(p => {
+                    let hasBoy = (p[0] && (p[0]["Giới Tính"]||"").toLowerCase().includes('nam')) || (p[1] && (p[1]["Giới Tính"]||"").toLowerCase().includes('nam'));
+                    if(hasBoy) bPairs.push(p); else gPairs.push(p);
                 });
-                let pairs = [];
-                for(let key in baziGroups) {
-                    let group = baziGroups[key]; shuffleArray(group);
-                    while(group.length >= 2) pairs.push([group.pop(), group.pop()]);
-                    if(group.length === 1) all.push(group.pop());
-                }
-                shuffleArray(all);
-                while(all.length >= 2) pairs.push([all.pop(), all.pop()]);
-                if(all.length === 1) pairs.push([all.pop(), null]);
-                
-                shuffleArray(pairs);
-                let colIdx = 0; pairs.forEach(p => { columns[colIdx % 4].push(p); colIdx++; });
+
+                bPairs.forEach((p, i) => columns[i % 2].push(p)); // Dãy 1, 2
+                gPairs.forEach((p, i) => columns[(i % 2) + 2].push(p)); // Dãy 3, 4
 
             } else {
-                let pairs = [];
-                if (mode === 'random') {
-                    shuffleArray(all);
-                    while(all.length >= 2) pairs.push([all.pop(), all.pop()]);
-                    if(all.length === 1) pairs.push([all.pop(), null]);
+                let pairs = [...predefinedPairs]; // Khởi tạo mảng pair bằng các cặp cố định
+                
+                if (mode === 'numerology') {
+                    let numGroups = {};
+                    remainingPool.forEach(s => { let num = getNumerology(s["Ngày Sinh"]); if(!numGroups[num]) numGroups[num] = []; numGroups[num].push(s); });
+                    for(let key in numGroups) {
+                        let group = numGroups[key]; shuffleArray(group);
+                        while(group.length >= 2) pairs.push([group.pop(), group.pop()]);
+                        if(group.length === 1) remainingPool.push(group.pop()); 
+                    }
+                    shuffleArray(remainingPool);
+                    while(remainingPool.length >= 2) pairs.push([remainingPool.pop(), remainingPool.pop()]);
+                    if(remainingPool.length === 1) pairs.push([remainingPool.pop(), null]);
+                } 
+                else if (mode === 'battu') {
+                    let baziGroups = {};
+                    remainingPool.forEach(s => { let bz = getBaziGroup(s["Ngày Sinh"]); if(!baziGroups[bz]) baziGroups[bz] = []; baziGroups[bz].push(s); });
+                    for(let key in baziGroups) {
+                        let group = baziGroups[key]; shuffleArray(group);
+                        while(group.length >= 2) pairs.push([group.pop(), group.pop()]);
+                        if(group.length === 1) remainingPool.push(group.pop());
+                    }
+                    shuffleArray(remainingPool);
+                    while(remainingPool.length >= 2) pairs.push([remainingPool.pop(), remainingPool.pop()]);
+                    if(remainingPool.length === 1) pairs.push([remainingPool.pop(), null]);
+                } 
+                else if (mode === 'random') {
+                    shuffleArray(remainingPool);
+                    while(remainingPool.length >= 2) pairs.push([remainingPool.pop(), remainingPool.pop()]);
+                    if(remainingPool.length === 1) pairs.push([remainingPool.pop(), null]);
                 } 
                 else if (mode === 'mixed') {
                     shuffleArray(boys); shuffleArray(girls);
@@ -348,6 +462,7 @@
                     if(leftovers.length === 1) pairs.push([leftovers.pop(), null]);
                 } 
                 else { 
+                    // Mặc định: Cùng giới tính
                     shuffleArray(boys); shuffleArray(girls);
                     while(boys.length >= 2) pairs.push([boys.pop(), boys.pop()]);
                     while(girls.length >= 2) pairs.push([girls.pop(), girls.pop()]);
@@ -360,20 +475,19 @@
                 let colIdx = 0; pairs.forEach(p => { columns[colIdx % 4].push(p); colIdx++; });
             }
 
-            // Đồng bộ thứ tự ưu tiên lấp bàn: Bàn 2 -> 6 trước, chừa Bàn 1
-            // Chỉ số mapping chuẩn: 0=Bàn6, 1=Bàn5, 2=Bàn4, 3=Bàn3, 4=Bàn2, 5=Bàn1
+            // 3. Phân bổ vào sơ đồ (Ưu tiên lấp đầy từ Bàn 2 đến Bàn 6, Bàn 1 lấp sau cùng)
             shuffledSecretList = new Array(48).fill(null);
-            const prefOrder = [4, 3, 2, 1, 0, 5]; 
+            const prefOrder = [4, 3, 2, 1, 0, 5]; // Row 2,3,4,5,6 rồi mới tới Row 1 (Index 5 là bàn gần bục giảng)
             
             for(let c=0; c<4; c++) {
                 let col = columns[c];
                 let emptyPairs = col.filter(p => p[0] === null && p[1] === null);
                 let occupiedPairs = col.filter(p => p[0] !== null || p[1] !== null);
-                shuffleArray(occupiedPairs);
-                let sortedCol = [...occupiedPairs, ...emptyPairs];
+                shuffleArray(occupiedPairs); // Đảo vị trí các cặp có người trong dãy
+                let sortedCol = [...occupiedPairs, ...emptyPairs]; // Dồn cặp có người lên trước, rỗng xuống cuối mảng ưu tiên
                 
                 for(let i=0; i<6; i++) {
-                    let r = prefOrder[i];
+                    let r = prefOrder[i]; // Lấy hàng thực tế từ mảng ưu tiên
                     let absId = c * 6 + r;
                     let pair = sortedCol[i] || [null, null];
                     
@@ -386,11 +500,10 @@
                 }
             }
 
+            // 4. Render ra màn hình (Khớp chuẩn chiều Sơ Đồ Lớp: Hàng 0 là Bàn 6, Hàng 5 là Bàn 1)
             const grid = document.getElementById('deskGrid');
-            let html = '';
-            let htmlIndex = 0;
+            let html = ''; let htmlIndex = 0;
 
-            // Render theo chiều dọc từ Bàn 6 -> Bàn 1 (0 -> 5)
             for(let r = 0; r < 6; r++) {
                 for(let c = 0; c < 4; c++) {
                     let absId = c * 6 + r;
@@ -406,8 +519,7 @@
             }
             grid.innerHTML = html;
             
-            spinIntervals.forEach(clearInterval);
-            spinIntervals = [];
+            spinIntervals.forEach(clearInterval); spinIntervals = [];
         }
 
         function createBlindBoxHTML(index, studentObj) {
@@ -427,6 +539,7 @@
             }, 400);
         }
 
+        // TÍNH NĂNG VÒNG QUAY TÊN
         function revealAllWithSpin() {
             let boxes = document.querySelectorAll('.blind-box');
             if(boxes.length === 0) return;
@@ -459,6 +572,7 @@
             boxes.forEach((box, index) => { setTimeout(() => { revealBox(box); }, index * 30); });
         }
 
+        // ĐỒNG BỘ VÀO SƠ ĐỒ LỚP CHÍNH THỨC
         function syncLayoutToMain() {
             if(shuffledSecretList.length === 0) return alert("Bạn chưa khởi tạo Hộp mù. Vui lòng bấm TRỘN LỚP trước khi lưu!");
 

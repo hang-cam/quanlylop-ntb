@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vòng Quay May Mắn</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Baloo 2', cursive;
+            background-color: #f0fdf4;
+            background-image: radial-gradient(#bbf7d0 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            border: 2px solid #e2e8f0;
+        }
+        .btn-spin {
+            background: linear-gradient(135deg, #f43f5e, #fb923c);
+            box-shadow: 0 4px 15px rgba(244, 63, 94, 0.4);
+            transition: all 0.2s ease;
+        }
+        .btn-spin:hover:not(:disabled) {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 6px 20px rgba(244, 63, 94, 0.6);
+        }
+        .btn-spin:disabled {
+            background: #cbd5e1;
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
+        canvas {
+            display: block;
+            margin: 0 auto;
+            max-width: 100%;
+        }
+        #pointer {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0; 
+            height: 0; 
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 40px solid #ef4444; /* Red pointer */
+            z-index: 10;
+            filter: drop-shadow(0px 4px 2px rgba(0,0,0,0.3));
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .winner-anim {
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.5) translateY(20px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        #toast-container {
+            position: fixed; top: 20px; right: 20px; z-index: 50;
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen p-4 md:p-8 flex flex-col items-center">
+
+    <header class="w-full max-w-6xl text-center mb-8">
+        <h1 class="text-4xl md:text-5xl font-bold text-teal-600 mb-2 drop-shadow-sm">✨ Vòng Quay May Mắn ✨</h1>
+        <p class="text-lg text-slate-600">Công cụ chọn học sinh tham gia hoạt động dành cho giáo viên</p>
+    </header>
+
+    <div id="toast-container"></div>
+
+    <div id="finalModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-lg w-full mx-4 transform scale-95 transition-transform duration-300" id="finalModalContent">
+            <div class="text-center mb-6">
+                <h2 class="text-3xl font-bold text-rose-500 mb-2">Danh sách may mắn được lựa chọn</h2>
+                <p class="text-slate-500">🎉 Chúc mừng các học sinh dưới đây! 🎉</p>
+            </div>
+            <div id="finalModalList" class="max-h-64 overflow-y-auto space-y-2 mb-6 p-2">
+                <!-- Danh sách sẽ được chèn tự động vào đây -->
+            </div>
+            <button id="btnCloseModal" class="w-full py-3 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-xl transition-colors shadow-lg shadow-rose-200">
+                Đóng
+            </button>
+        </div>
+    </div>
+
+    <main class="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Left Column: Inputs & Settings -->
+        <div class="lg:col-span-4 flex flex-col gap-6">
+            
+            <div class="glass-panel p-6">
+                <h2 class="text-xl font-bold text-indigo-600 mb-4 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                    Thiết lập danh sách
+                </h2>
+                <p class="text-sm text-slate-500 mb-2">Nhập <b>Tên học sinh</b> (mỗi dòng 1 học sinh)</p>
+                <textarea id="studentData" class="w-full h-48 p-3 border-2 border-indigo-100 rounded-xl focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200 resize-none mb-3 text-sm" placeholder="Nguyễn Văn A&#10;Trần Thị B&#10;Lê Văn C">Nguyễn Văn An
+Trần Bình
+Lê Cường
+Phạm Dung
+Hoàng Yến
+Vũ Phong
+Đặng Sơn
+Bùi Ngọc
+Lý Hùng
+Ngô Trí</textarea>
+                
+                <div class="mb-6 mt-4">
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Số lượng học sinh cần chọn:</label>
+                    <input type="number" id="targetCount" min="1" value="1" class="w-full p-2 border-2 border-emerald-100 rounded-xl focus:outline-none focus:border-emerald-400">
+                </div>
+
+                <div class="flex gap-3">
+                    <button id="btnShuffle" class="w-1/3 py-3 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-xl transition-colors shadow-lg shadow-indigo-200 flex items-center justify-center gap-1" title="Đảo ngẫu nhiên danh sách">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                        Đảo DS
+                    </button>
+                    <button id="btnUpdate" class="w-2/3 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl transition-colors shadow-lg shadow-emerald-200">
+                        Cập nhật Vòng quay
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center Column: Wheel -->
+        <div class="lg:col-span-5 flex flex-col items-center justify-center glass-panel p-6 relative">
+            <h2 class="text-2xl font-bold text-rose-500 mb-2">Vòng Quay Chon Lọc</h2>
+            <p id="wheelStatus" class="text-sm font-semibold text-slate-500 mb-6 bg-slate-100 px-3 py-1 rounded-full">Chưa có dữ liệu trên vòng quay</p>
+            
+            <div class="relative w-full aspect-square max-w-[400px] flex items-center justify-center mb-6">
+                <!-- Pointer -->
+                <div id="pointer" class="hidden"></div>
+                <!-- Canvas -->
+                <canvas id="wheelCanvas" width="400" height="400" class="rounded-full shadow-xl shadow-rose-100"></canvas>
+                <!-- Inner center circle -->
+                <div class="absolute w-16 h-16 bg-white rounded-full shadow-inner flex items-center justify-center border-4 border-rose-100">
+                    <div class="w-6 h-6 rounded-full bg-rose-400 animate-pulse"></div>
+                </div>
+            </div>
+
+            <button id="btnSpin" disabled class="btn-spin w-3/4 py-4 text-white text-xl font-bold rounded-2xl flex items-center justify-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" /></svg>
+                QUAY NGAY!
+            </button>
+        </div>
+
+        <!-- Right Column: Results -->
+        <div class="lg:col-span-3 flex flex-col gap-6">
+            <div class="glass-panel p-6 h-full flex flex-col">
+                <h2 class="text-xl font-bold text-amber-500 mb-2 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
+                    Kết quả đã chọn
+                </h2>
+                
+                <div class="flex justify-between items-center bg-amber-50 rounded-lg p-2 mb-4 border border-amber-100 text-sm">
+                    <span class="text-slate-600">Đã chọn: <strong id="selectedCount" class="text-amber-600">0</strong></span>
+                    <span class="text-slate-600">Cần chọn: <strong id="targetDisplay" class="text-amber-600">0</strong></span>
+                </div>
+
+                <div id="resultsList" class="flex-1 overflow-y-auto pr-2 space-y-3">
+                    <!-- Results will be injected here -->
+                    <div class="text-center text-slate-400 text-sm italic mt-10">
+                        Chưa có học sinh nào được chọn.<br>Hãy thiết lập lọc và quay!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // State Variables
+        let allStudents = [];
+        let availableForSpin = [];
+        let selectedStudents = [];
+        let numToSelect = 0;
+        
+        // Wheel Variables
+        let canvas = document.getElementById("wheelCanvas");
+        let ctx = canvas.getContext("2d");
+        let currentAngle = 0;
+        let isSpinning = false;
+        
+        // Settings
+        const wheelColors = ['#FF9AA2', '#FFB7B2', '#FFDAC1', '#E2F0CB', '#B5EAD7', '#C7CEEA', '#F6E8EA', '#FDF5C9'];
+        
+        // DOM Elements
+        const elStudentData = document.getElementById('studentData');
+        const elTargetCount = document.getElementById('targetCount');
+        const elBtnShuffle = document.getElementById('btnShuffle');
+        const elBtnUpdate = document.getElementById('btnUpdate');
+        const elBtnSpin = document.getElementById('btnSpin');
+        const elPointer = document.getElementById('pointer');
+        const elWheelStatus = document.getElementById('wheelStatus');
+        const elResultsList = document.getElementById('resultsList');
+        const elSelectedCount = document.getElementById('selectedCount');
+        const elTargetDisplay = document.getElementById('targetDisplay');
+
+        // 1. Load Data & Prepare Wheel
+        function updateWheel() {
+            const lines = elStudentData.value.split('\n');
+            allStudents = [];
+
+            lines.forEach(line => {
+                const name = line.trim();
+                if (name) {
+                    allStudents.push({ name });
+                }
+            });
+
+            if (allStudents.length === 0) {
+                showToast("Không tìm thấy dữ liệu hợp lệ.", "error");
+                return;
+            }
+
+            numToSelect = parseInt(elTargetCount.value);
+            if (isNaN(numToSelect) || numToSelect <= 0) {
+                showToast("Vui lòng nhập số lượng hợp lệ!", "error");
+                return;
+            }
+
+            if (numToSelect > allStudents.length) {
+                showToast(`Chỉ có ${allStudents.length} học sinh. Đã tự điều chỉnh số lượng.`, "warning");
+                numToSelect = allStudents.length;
+                elTargetCount.value = numToSelect;
+            }
+
+            // Reset wheel
+            availableForSpin = [...allStudents];
+            selectedStudents = [];
+            currentAngle = 0;
+            
+            elTargetDisplay.textContent = numToSelect;
+            updateUI();
+            drawWheel();
+            showToast(`Đã tải ${allStudents.length} học sinh! Sẵn sàng quay.`, "success");
+        }
+
+        elBtnShuffle.addEventListener('click', () => {
+            const lines = elStudentData.value.split('\n').map(line => line.trim()).filter(line => line !== '');
+            if (lines.length === 0) {
+                showToast("Danh sách trống, không có gì để đảo!", "warning");
+                return;
+            }
+            
+            // Fisher-Yates Shuffle
+            for (let i = lines.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [lines[i], lines[j]] = [lines[j], lines[i]];
+            }
+            
+            elStudentData.value = lines.join('\n');
+            showToast("Đã đảo lộn danh sách ngẫu nhiên!", "success");
+        });
+
+        elBtnUpdate.addEventListener('click', updateWheel);
+
+        // 3. Draw Wheel
+        function drawWheel() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = Math.min(centerX, centerY) - 10; // Padding
+
+            if (availableForSpin.length === 0) {
+                // Draw empty state
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+                ctx.fillStyle = '#e2e8f0';
+                ctx.fill();
+                ctx.strokeStyle = '#cbd5e1';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.fillStyle = '#64748b';
+                ctx.font = '16px Baloo 2';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('Trống', centerX, centerY);
+                elPointer.classList.add('hidden');
+                return;
+            }
+
+            elPointer.classList.remove('hidden');
+            const numSlices = availableForSpin.length;
+            const arcSize = (2 * Math.PI) / numSlices;
+
+            for (let i = 0; i < numSlices; i++) {
+                const angle = currentAngle + i * arcSize;
+                
+                // Draw slice
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, angle, angle + arcSize, false);
+                ctx.fillStyle = wheelColors[i % wheelColors.length];
+                ctx.fill();
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.closePath();
+
+                // Draw text
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(angle + arcSize / 2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = "#334155";
+                ctx.font = "bold 16px 'Baloo 2', sans-serif";
+                
+                const text = availableForSpin[i].name;
+                // Truncate long names
+                const displayName = text.length > 15 ? text.substring(0, 15) + '...' : text;
+                ctx.fillText(displayName, radius - 20, 5);
+                ctx.restore();
+            }
+        }
+
+        // 4. Spin Logic
+        let spinVelocity = 0;
+        let spinTargetRotation = 0;
+        let spinAnimationId;
+
+        elBtnSpin.addEventListener('click', startSpin);
+
+        function startSpin() {
+            if (isSpinning || availableForSpin.length === 0 || selectedStudents.length >= numToSelect) return;
+            
+            isSpinning = true;
+            elBtnSpin.disabled = true;
+            
+            // Randomize spin length: 3 to 6 full rotations + random extra angle
+            const extraRotations = (Math.floor(Math.random() * 4) + 3) * 2 * Math.PI; 
+            const randomEndAngle = Math.random() * 2 * Math.PI;
+            spinTargetRotation = currentAngle + extraRotations + randomEndAngle;
+            
+            spinVelocity = 0.4; // Initial speed
+            
+            animateSpin();
+        }
+
+        function animateSpin() {
+            const distanceLeft = spinTargetRotation - currentAngle;
+            
+            if (distanceLeft < 0.005) {
+                // Stop spinning
+                currentAngle = spinTargetRotation % (2 * Math.PI);
+                isSpinning = false;
+                drawWheel();
+                selectWinner();
+                return;
+            }
+
+            // Simple easing out
+            spinVelocity = Math.max(0.002, distanceLeft * 0.02);
+            currentAngle += spinVelocity;
+            
+            drawWheel();
+            spinAnimationId = requestAnimationFrame(animateSpin);
+        }
+
+        // 5. Select Winner
+        function selectWinner() {
+            const numSlices = availableForSpin.length;
+            const arcSize = (2 * Math.PI) / numSlices;
+            
+            // Pointer is at the top (270 degrees / 1.5 PI).
+            // We need to calculate which slice is currently under the top pointer.
+            // Wheel is rotated by `currentAngle`.
+            // Top position relative to the base circle (0 rotation) = (1.5 PI - currentAngle) % (2 PI)
+            
+            let relativeTopAngle = (1.5 * Math.PI - currentAngle) % (2 * Math.PI);
+            if (relativeTopAngle < 0) {
+                relativeTopAngle += 2 * Math.PI;
+            }
+            
+            const winningIndex = Math.floor(relativeTopAngle / arcSize);
+            const winner = availableForSpin[winningIndex];
+
+            // Announce & Add to list
+            selectedStudents.push(winner);
+            availableForSpin.splice(winningIndex, 1); // Remove from wheel
+            
+            updateUI();
+            
+            // Add visual element to list
+            const listItem = document.createElement('div');
+            listItem.className = 'winner-anim bg-white p-3 rounded-xl border border-amber-100 shadow-sm flex items-center justify-between';
+            listItem.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center font-bold">
+                        ${selectedStudents.length}
+                    </div>
+                    <div>
+                        <div class="font-bold text-slate-700">${winner.name}</div>
+                    </div>
+                </div>
+                <div class="text-xl">🎉</div>
+            `;
+            
+            if (selectedStudents.length === 1) {
+                elResultsList.innerHTML = ''; // clear placeholder
+            }
+            elResultsList.appendChild(listItem);
+            
+            // Scroll to bottom
+            elResultsList.scrollTop = elResultsList.scrollHeight;
+
+            // Check if we need to spin again
+            if (selectedStudents.length < numToSelect && availableForSpin.length > 0) {
+                showToast(`Đã chọn ${winner.name}. Đang chuẩn bị quay tiếp...`, "info");
+                // Delay then spin again
+                setTimeout(() => {
+                    // Redraw to reflect removed slice before spinning again
+                    currentAngle = 0; 
+                    drawWheel();
+                    setTimeout(startSpin, 500); // Start next spin
+                }, 1500);
+            } else {
+                showToast("Đã hoàn tất quá trình chọn lọc!", "success");
+                // Redraw final empty/remaining wheel
+                currentAngle = 0;
+                drawWheel();
+                showFinalModal();
+            }
+        }
+
+        function showFinalModal() {
+            const elFinalModal = document.getElementById('finalModal');
+            const elFinalModalList = document.getElementById('finalModalList');
+            const elFinalModalContent = document.getElementById('finalModalContent');
+            
+            elFinalModalList.innerHTML = '';
+            selectedStudents.forEach((student, index) => {
+                const item = document.createElement('div');
+                item.className = 'flex items-center gap-3 p-3 bg-rose-50 rounded-lg border border-rose-100';
+                item.innerHTML = `
+                    <div class="w-8 h-8 rounded-full bg-rose-200 text-rose-700 flex items-center justify-center font-bold">
+                        ${index + 1}
+                    </div>
+                    <div class="font-bold text-slate-800 text-lg">${student.name}</div>
+                `;
+                elFinalModalList.appendChild(item);
+            });
+            
+            elFinalModal.classList.remove('hidden');
+            // Yêu cầu trình duyệt tính toán lại giao diện trước khi thêm animation
+            void elFinalModal.offsetWidth;
+            elFinalModal.classList.remove('opacity-0');
+            elFinalModalContent.classList.remove('scale-95');
+            elFinalModalContent.classList.add('scale-100');
+        }
+
+        document.getElementById('btnCloseModal').addEventListener('click', () => {
+            const elFinalModal = document.getElementById('finalModal');
+            const elFinalModalContent = document.getElementById('finalModalContent');
+            elFinalModal.classList.add('opacity-0');
+            elFinalModalContent.classList.remove('scale-100');
+            elFinalModalContent.classList.add('scale-95');
+            setTimeout(() => elFinalModal.classList.add('hidden'), 300);
+        });
+
+        // UI Helpers
+        function updateUI() {
+            // Status text
+            if (availableForSpin.length > 0) {
+                elWheelStatus.textContent = `Đang có ${availableForSpin.length} học sinh trên vòng quay`;
+                elWheelStatus.className = "text-sm font-semibold text-emerald-600 mb-6 bg-emerald-50 px-3 py-1 rounded-full";
+            } else {
+                elWheelStatus.textContent = "Không có ai trên vòng quay";
+                elWheelStatus.className = "text-sm font-semibold text-slate-500 mb-6 bg-slate-100 px-3 py-1 rounded-full";
+            }
+
+            // Spin Button
+            if (availableForSpin.length > 0 && selectedStudents.length < numToSelect && !isSpinning) {
+                elBtnSpin.disabled = false;
+                elBtnSpin.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" /></svg> QUAY NGAY!`;
+            } else {
+                elBtnSpin.disabled = true;
+                if (selectedStudents.length > 0 && selectedStudents.length >= numToSelect) {
+                     elBtnSpin.innerHTML = "ĐÃ HOÀN TẤT";
+                }
+            }
+
+            elSelectedCount.textContent = selectedStudents.length;
+            
+            if (selectedStudents.length === 0 && (!numToSelect || isNaN(numToSelect))) {
+                elResultsList.innerHTML = '<div class="text-center text-slate-400 text-sm italic mt-10">Chưa có học sinh nào được chọn.<br>Hãy thiết lập lọc và quay!</div>';
+            }
+        }
+
+        // Custom Toast Notification instead of alert()
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            let bgClass = 'bg-blue-500';
+            let icon = 'ℹ️';
+            
+            if (type === 'success') { bgClass = 'bg-emerald-500'; icon = '✅'; }
+            if (type === 'error') { bgClass = 'bg-rose-500'; icon = '⚠️'; }
+            if (type === 'warning') { bgClass = 'bg-amber-500'; icon = '⚡'; }
+
+            toast.className = `${bgClass} text-white px-4 py-3 rounded-lg shadow-lg mb-3 flex items-center gap-3 transition-all duration-300 transform translate-x-full opacity-0`;
+            toast.innerHTML = `<span class="text-xl">${icon}</span> <span class="font-medium">${message}</span>`;
+            
+            container.appendChild(toast);
+            
+            // Animate in
+            setTimeout(() => {
+                toast.classList.remove('translate-x-full', 'opacity-0');
+            }, 10);
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-x-full');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Initialize on load
+        window.onload = () => {
+            updateWheel();
+        };
+
+    </script>
+</body>
+</html>

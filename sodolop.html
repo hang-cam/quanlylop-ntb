@@ -56,6 +56,7 @@
         .btn-review { background: linear-gradient(135deg, #0ea5e9, #0284c7); box-shadow: 0 4px 10px rgba(14, 165, 233, 0.3); }
         .btn-pack { background: linear-gradient(135deg, #3b82f6, #2563eb); }
         .btn-custom-seat { background: linear-gradient(135deg, #ec4899, #be185d); text-decoration: none; }
+        .btn-excel { background: linear-gradient(135deg, #10b981, #059669); }
 
         .class-info-panel { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; background: #f8fafc; padding: 25px; border-radius: 16px; margin-bottom: 25px; border: 1px solid var(--border-color); }
         .class-info-panel div { display: flex; flex-direction: column; gap: 8px; }
@@ -79,7 +80,7 @@
         
         .seat-wrapper { display: flex; gap: 10px; width: 100%; }
         .seat-box { flex: 1; }
-        .desk-item select.seat-select { width: 100%; padding: 10px 4px; border-radius: 10px; border: 1px solid #cbd5e1; font-family: inherit; font-size: 14px; font-weight: 700; color: var(--text-main); outline: none; background: white; transition: 0.3s;}
+        .desk-item select.seat-select { width: 100%; padding: 10px 4px; border-radius: 10px; border: 1px solid #cbd5e1; font-family: inherit; font-size: 14px; font-weight: 700; color: var(--text-main); outline: none; background: white; transition: 0.3s; text-align: center; text-align-last: center;}
         .desk-item select.seat-select.seat-nam { background-color: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
         .desk-item select.seat-select.seat-nu { background-color: #fdf2f8; color: #be185d; border-color: #fbcfe8; }
         .desk-item select.seat-select:focus { border-color: var(--primary-orange); box-shadow: 0 0 0 3px var(--light-orange);}
@@ -150,46 +151,67 @@
         .modal-header { text-align: center; margin-bottom: 25px; border-bottom: 2px dashed #ecf0f1; padding-bottom: 15px;}
         .modal-header h2 { margin: 0; font-size: 22px; font-weight: 900; color: var(--text-main); display: flex; align-items: center; justify-content: center; gap: 10px;}
 
+        /* BỘ CSS IN ẤN ĐÃ ĐƯỢC TỐI ƯU HÓA HOÀN HẢO CHO 1 TRANG A4 NGANG */
         #printDutyContainer { display: none; }
         .print-only-header { display: none; }
 
         @media print {
+            @page { size: A4 landscape; margin: 10mm; }
             body { background: white; margin: 0; padding: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;}
+            
             body.print-duty-mode * { visibility: hidden; }
             body.print-duty-mode #printDutyContainer,
             body.print-duty-mode #printDutyContainer * { visibility: visible; }
             body.print-duty-mode #printDutyContainer { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
             
-            .print-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-family: 'Times New Roman', serif; }
-            .print-table th, .print-table td { border: 1px solid #000; padding: 12px 10px; text-align: center; font-size: 14pt;}
+            .print-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-family: 'Times New Roman', serif; }
+            .print-table th, .print-table td { border: 1px solid #000; padding: 10px; text-align: center; font-size: 13pt;}
             .print-table th { font-weight: bold; background: #e2e8f0 !important; -webkit-print-color-adjust: exact; text-transform: uppercase;}
-            .print-header { text-align: center; margin-bottom: 30px; font-family: 'Times New Roman', serif;}
-            .print-header h2 { font-size: 20pt; text-transform: uppercase; margin: 0; font-weight: bold;}
+            .print-header { text-align: center; margin-bottom: 20px; font-family: 'Times New Roman', serif;}
+            .print-header h2 { font-size: 18pt; text-transform: uppercase; margin: 0; font-weight: bold;}
 
+            /* Ép Layout Sơ Đồ vừa đúng 1 trang */
             body:not(.print-duty-mode) * { visibility: hidden; }
             body:not(.print-duty-mode) #tab-sodo, 
             body:not(.print-duty-mode) #tab-sodo * { visibility: visible; }
-            body:not(.print-duty-mode) #tab-sodo { position: absolute; left: 0; top: 0; width: 100%; }
+            body:not(.print-duty-mode) #tab-sodo { position: absolute; left: 0; top: 0; width: 100%; height: 95vh; display: flex; flex-direction: column; justify-content: flex-start;}
+            
             body:not(.print-duty-mode) .header, 
             body:not(.print-duty-mode) .tabs, 
             body:not(.print-duty-mode) .class-info-panel, 
             body:not(.print-duty-mode) .action-bar { display: none !important; }
-            body:not(.print-duty-mode) .container { max-width: 100% !important; padding: 0 !important; box-shadow: none !important; border: none !important; margin: 0 !important;}
-            body:not(.print-duty-mode) .classroom-layout { border: 2px solid #000 !important; padding: 20px !important; box-shadow: none !important; border-radius: 0 !important; background: white !important;}
-            body:not(.print-duty-mode) .print-only-header { display: block !important; text-align: center; margin-bottom: 20px; font-family: 'Times New Roman', serif; }
-            body:not(.print-duty-mode) .print-only-header h2 { font-size: 26px; font-weight: bold; margin: 0 0 15px 0; color: #000; }
-            body:not(.print-duty-mode) .print-info-row { display: flex; justify-content: space-between; font-size: 16px; margin-bottom: 8px; padding: 0 50px; color: #000; }
+            body:not(.print-duty-mode) .container { max-width: 100% !important; padding: 0 !important; box-shadow: none !important; border: none !important; margin: 0 !important; flex-grow: 1; display: flex; flex-direction: column;}
             
-            body:not(.print-duty-mode) .desk-item { background: #fff !important; border: 2px solid #000 !important; box-shadow: none !important; border-radius: 0 !important;}
-            body:not(.print-duty-mode) .desk-label { background: #000 !important; color: #fff !important; border: 1px solid #000 !important; border-radius: 0 !important;}
-            body:not(.print-duty-mode) .desk-item select.seat-select { border: 1px solid #000 !important; background: #fff !important; color: #000 !important; border-radius: 0 !important; font-size: 13px !important; padding: 5px !important;}
+            body:not(.print-duty-mode) .print-only-header { display: block !important; text-align: center; margin-bottom: 10px; font-family: 'Times New Roman', serif; flex-shrink: 0;}
+            body:not(.print-duty-mode) .print-only-header h2 { font-size: 24px; font-weight: bold; margin: 0 0 10px 0; color: #000; }
+            body:not(.print-duty-mode) .print-info-row { display: flex; justify-content: space-between; font-size: 16px; margin-bottom: 5px; padding: 0 40px; color: #000; }
+            body:not(.print-duty-mode) hr { margin: 10px 0 20px 0 !important; border-top: 2px solid #000; }
+            
+            body:not(.print-duty-mode) .classroom-layout { border: 3px solid #000 !important; padding: 25px 20px !important; box-shadow: none !important; border-radius: 16px !important; background: white !important; flex-grow: 1; display: flex; flex-direction: column;}
+            
+            body:not(.print-duty-mode) .group-titles { margin-bottom: 15px; gap: 15px; flex-shrink: 0;}
+            body:not(.print-duty-mode) .group-titles div:nth-child(2) { margin-right: 50px; }
+            body:not(.print-duty-mode) .group-select { border: none !important; background: transparent !important; color: #000 !important; font-size: 18px !important; padding: 5px; font-weight: bold !important;}
+            
+            body:not(.print-duty-mode) .desks-grid { gap: 15px; row-gap: 25px; flex-grow: 1; display: grid; }
+            body:not(.print-duty-mode) .desks-grid .desk-item:nth-child(4n+2) { margin-right: 50px; }
+            
+            body:not(.print-duty-mode) .desk-item { background: #fff !important; border: 2px solid #000 !important; box-shadow: none !important; border-radius: 12px !important; padding: 20px 8px 8px 8px !important; gap: 8px; justify-content: center;}
+            body:not(.print-duty-mode) .desk-label { background: #000 !important; color: #fff !important; border: none !important; border-radius: 12px !important; font-size: 13px !important; font-weight: bold !important; padding: 4px 16px !important; top: -14px !important;}
+            body:not(.print-duty-mode) .seat-wrapper { gap: 8px; height: 100%; align-items: stretch; }
+            
+            /* Tên học sinh 2 chữ hiển thị sắc nét & Ẩn đi ô Trống hoàn toàn */
+            body:not(.print-duty-mode) .desk-item select.seat-select { border: 1px solid #555 !important; background: #fff !important; color: #000 !important; border-radius: 8px !important; font-size: 14.5px !important; padding: 8px 2px !important; font-weight: bold !important; height: 100% !important; white-space: pre-wrap !important; text-align: center !important; text-align-last: center !important; line-height: 1.4 !important; outline: none !important; appearance: none; -webkit-appearance: none;}
+            
             body:not(.print-duty-mode) .desk-item select.seat-select.seat-nam, 
-            body:not(.print-duty-mode) .desk-item select.seat-select.seat-nu { background-color: #fff !important; color: #000 !important; border-color: #000 !important; }
+            body:not(.print-duty-mode) .desk-item select.seat-select.seat-nu { background-color: #fff !important; color: #000 !important; border-color: #555 !important; }
             select { appearance: none; -webkit-appearance: none; }
-            body:not(.print-duty-mode) .group-select { border: none !important; background: transparent !important; color: #000 !important; font-size: 18px !important; }
-            body:not(.print-duty-mode) .box-board { background: #eee !important; color: #000 !important; border: 2px solid #000 !important; box-shadow: none !important; border-radius: 0 !important;}
-            body:not(.print-duty-mode) .box-select { background: transparent !important; border: 2px dashed #000 !important; border-radius: 0 !important;}
-            body:not(.print-duty-mode) .box-select select { color: #000 !important; }
+            
+            body:not(.print-duty-mode) .bottom-layout { margin-top: 25px; border-top: 2px dashed #000; padding-top: 25px; gap: 20px; flex-shrink: 0;}
+            body:not(.print-duty-mode) .layout-box { height: 45px; border-radius: 10px !important;}
+            body:not(.print-duty-mode) .box-board { background: #f1f5f9 !important; color: #000 !important; border: 2px solid #000 !important; box-shadow: none !important; font-size: 18px !important; font-weight: bold !important;}
+            body:not(.print-duty-mode) .box-select { background: transparent !important; border: 1px dashed #000 !important; border-radius: 0 !important;}
+            body:not(.print-duty-mode) .box-select select { color: #000 !important; font-size: 16px !important;}
         }
     </style>
 </head>
@@ -220,26 +242,28 @@
         <div class="action-bar">
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                 <button class="btn btn-random" onclick="autoArrangeSeats()">🎲 Xếp Chỗ Ngẫu Nhiên</button>
-                <!-- NÚT MỚI: Xếp chỗ theo yêu cầu -->
                 <a href="xepchovui.html" class="btn btn-custom-seat">✨ Xếp Chỗ Theo Yêu Cầu</a>
                 <button class="btn btn-save" onclick="saveSeating()">💾 Lưu Sơ Đồ</button>
             </div>
-            <button class="btn btn-export" onclick="window.print()">🖨️ In Sơ Đồ Lớp</button>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn btn-excel" onclick="exportSeatingToExcel()">📥 Tải Sơ Đồ (Excel)</button>
+                <button class="btn btn-export" onclick="printSeating()">🖨️ In Sơ Đồ Lớp (Ngang A4)</button>
+            </div>
         </div>
 
         <div class="print-only-header">
             <h2>SƠ ĐỒ CHỖ NGỒI LỚP <span id="pr-class"></span></h2>
             <div class="print-info-row"><span>GVCN: <b id="pr-teacher"></b></span><span>Phòng học: <b id="pr-room"></b></span></div>
             <div class="print-info-row"><span>Sỉ số: <b id="pr-siso"></b></span><span>Nam: <b id="pr-male"></b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Nữ: <b id="pr-female"></b></span></div>
-            <hr style="border-top: 2px dashed #000; margin: 15px 0 25px 0;">
+            <hr>
         </div>
 
         <div class="classroom-layout">
             <div class="group-titles">
-                <div><select id="group_col_1" class="group-select"><option value="Tổ 1">TỔ 1</option><option value="Tổ 2">TỔ 2</option><option value="Tổ 3">TỔ 3</option><option value="Tổ 4">TỔ 4</option></select><div style="color:#94a3b8; font-size:12px; margin-top:5px;">(Dãy 1)</div></div>
-                <div><select id="group_col_2" class="group-select"><option value="Tổ 2" selected>TỔ 2</option><option value="Tổ 1">TỔ 1</option><option value="Tổ 3">TỔ 3</option><option value="Tổ 4">TỔ 4</option></select><div style="color:#94a3b8; font-size:12px; margin-top:5px;">(Dãy 2)</div></div>
-                <div><select id="group_col_3" class="group-select"><option value="Tổ 3" selected>TỔ 3</option><option value="Tổ 1">TỔ 1</option><option value="Tổ 2">TỔ 2</option><option value="Tổ 4">TỔ 4</option></select><div style="color:#94a3b8; font-size:12px; margin-top:5px;">(Dãy 3)</div></div>
-                <div><select id="group_col_4" class="group-select"><option value="Tổ 4" selected>TỔ 4</option><option value="Tổ 1">TỔ 1</option><option value="Tổ 2">TỔ 2</option><option value="Tổ 3">TỔ 3</option></select><div style="color:#94a3b8; font-size:12px; margin-top:5px;">(Dãy 4)</div></div>
+                <div><select id="group_col_1" class="group-select"><option value="Tổ 1">TỔ 1</option><option value="Tổ 2">TỔ 2</option><option value="Tổ 3">TỔ 3</option><option value="Tổ 4">TỔ 4</option></select></div>
+                <div><select id="group_col_2" class="group-select"><option value="Tổ 2" selected>TỔ 2</option><option value="Tổ 1">TỔ 1</option><option value="Tổ 3">TỔ 3</option><option value="Tổ 4">TỔ 4</option></select></div>
+                <div><select id="group_col_3" class="group-select"><option value="Tổ 3" selected>TỔ 3</option><option value="Tổ 1">TỔ 1</option><option value="Tổ 2">TỔ 2</option><option value="Tổ 4">TỔ 4</option></select></div>
+                <div><select id="group_col_4" class="group-select"><option value="Tổ 4" selected>TỔ 4</option><option value="Tổ 1">TỔ 1</option><option value="Tổ 2">TỔ 2</option><option value="Tổ 3">TỔ 3</option></select></div>
             </div>
 
             <div class="desks-grid" id="deskGrid"></div>
@@ -523,12 +547,30 @@
         document.getElementById('pr-male').innerText = maleCount; document.getElementById('pr-female').innerText = femaleCount;
     }
 
+    // TÍNH NĂNG TÊN 2 CHỮ (BỔ SUNG QUÉT TRÙNG TÊN ĐỂ PHÂN BIỆT BẰNG CHỮ LÓT)
     function getStudentOptions() {
         let opts = `<option value="">-- Trống --</option>`;
+        
+        let nameCounts = {};
+        studentsData.forEach(s => {
+            let parts = s["Họ và Tên"].trim().split(' ');
+            let short = parts.length >= 2 ? parts.slice(-2).join(' ') : parts[0];
+            nameCounts[short] = (nameCounts[short] || 0) + 1;
+        });
+
         studentsData.forEach((s, i) => {
+            let nameParts = s["Họ và Tên"].trim().split(' ');
+            let shortName = nameParts.length >= 2 ? nameParts.slice(-2).join(' ') : nameParts[0];
+            
+            // Xử lý trùng tên: Thêm chữ cái đầu của chữ lót để phân biệt
+            if (nameCounts[shortName] > 1 && nameParts.length > 2) {
+                let prevWord = nameParts[nameParts.length - 3];
+                shortName = prevWord.charAt(0) + '. ' + shortName;
+            }
+
             let gt = (s["Giới Tính"] || "").toLowerCase();
-            let icon = (gt === "nam") ? "👦" : (gt === "nữ" || gt === "nu" ? "👧" : "👤");
-            opts += `<option value="${i}">${icon} ${s["STT"] || i+1}. ${s["Họ và Tên"].split(' ').slice(-2).join(' ')}</option>`; 
+            let icon = gt.includes("nam") ? "👦" : (gt.includes("nữ") || gt.includes("nu") ? "👧" : "👤");
+            opts += `<option value="${i}">${icon} ${s["STT"] || i+1}. ${shortName}</option>`; 
         });
         return opts;
     }
@@ -567,7 +609,7 @@
             sel.classList.remove('seat-nam', 'seat-nu');
             if (sel.value !== "") {
                 let gt = (studentsData[sel.value]["Giới Tính"] || "").toLowerCase();
-                if (gt === 'nam') sel.classList.add('seat-nam'); else if (gt === 'nữ' || gt === 'nu') sel.classList.add('seat-nu');
+                if (gt.includes('nam')) sel.classList.add('seat-nam'); else if (gt.includes('nữ') || gt.includes('nu')) sel.classList.add('seat-nu');
             }
         });
         selects.forEach(sel => {
@@ -578,19 +620,17 @@
 
     function syncLayoutBoxes(source) {
         const left = document.getElementById('leftBox'); const right = document.getElementById('rightBox');
-        if (source === 'left') right.value = left.value === 'door' ? 'teacher' : 'door';
-        else left.value = right.value === 'door' ? 'teacher' : 'door';
+        if (source === 'left') right.value = (left.value === 'door') ? 'teacher' : 'door';
+        else left.value = (right.value === 'door') ? 'teacher' : 'door';
     }
 
-    // THUẬT TOÁN MỚI: Chia đều nam nữ cho 4 dãy & ưu tiên trống bàn 1
     function autoArrangeSeats() {
         if(!confirm("Xáo trộn ngẫu nhiên, chia đều Nam/Nữ cho 4 dãy và ưu tiên trống Bàn 1?")) return;
         
         let boys = []; let girls = [];
         studentsData.forEach((s, idx) => {
             let gt = (s["Giới Tính"] || "").toLowerCase();
-            if(gt === 'nam') boys.push(idx); 
-            else girls.push(idx); 
+            if(gt.includes('nam')) boys.push(idx); else girls.push(idx); 
         });
 
         const shuffle = (arr) => { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } };
@@ -604,21 +644,18 @@
         const selects = document.querySelectorAll('.seat-select');
         selects.forEach(sel => sel.value = "");
 
-        // Thứ tự ưu tiên r (0: Bàn 6, 1: Bàn 5, 2: Bàn 4, 3: Bàn 3, 4: Bàn 2, 5: Bàn 1)
         const prefOrder = [4, 3, 2, 1, 0, 5]; 
 
         for(let c=0; c<4; c++) {
             let studentsInCol = cols[c];
-            
-            let cBoys = studentsInCol.filter(idx => { let gt = (studentsData[idx]["Giới Tính"] || "").toLowerCase(); return gt === 'nam'; });
-            let cGirls = studentsInCol.filter(idx => { let gt = (studentsData[idx]["Giới Tính"] || "").toLowerCase(); return gt !== 'nam'; });
+            let cBoys = studentsInCol.filter(idx => { let gt = (studentsData[idx]["Giới Tính"] || "").toLowerCase(); return gt.includes('nam'); });
+            let cGirls = studentsInCol.filter(idx => { let gt = (studentsData[idx]["Giới Tính"] || "").toLowerCase(); return !gt.includes('nam'); });
             
             let pairs = [];
             while(cBoys.length >= 2) pairs.push([cBoys.pop(), cBoys.pop()]);
             while(cGirls.length >= 2) pairs.push([cGirls.pop(), cGirls.pop()]);
             
-            let leftovers = [...cBoys, ...cGirls];
-            shuffle(leftovers);
+            let leftovers = [...cBoys, ...cGirls]; shuffle(leftovers);
             while(leftovers.length >= 2) pairs.push([leftovers.pop(), leftovers.pop()]);
             if(leftovers.length === 1) pairs.push([leftovers.pop(), ""]);
             
@@ -626,11 +663,8 @@
 
             for(let i=0; i<pairs.length; i++) {
                 if (i >= 6) break; 
-                let r = prefOrder[i];
-                let absId = c * 6 + r;
-                let seat1 = document.getElementById(`seat_${absId}_1`);
-                let seat2 = document.getElementById(`seat_${absId}_2`);
-                
+                let r = prefOrder[i]; let absId = c * 6 + r;
+                let seat1 = document.getElementById(`seat_${absId}_1`); let seat2 = document.getElementById(`seat_${absId}_2`);
                 let pair = pairs[i];
                 if(Math.random() > 0.5) pair.reverse();
 
@@ -638,7 +672,6 @@
                 if(seat2 && pair[1] !== "") seat2.value = pair[1];
             }
         }
-
         handleSeatChange(); 
     }
 
@@ -706,6 +739,85 @@
         }
     }
 
+    // TÍNH NĂNG IN SƠ ĐỒ SẠCH MỚI
+    function printSeating() {
+        const selects = document.querySelectorAll('.seat-select');
+        let originalEmptyTexts = [];
+        
+        // Ẩn chữ "-- Trống --" khi in
+        selects.forEach((sel, index) => {
+            if(sel.value === "") {
+                let emptyOpt = sel.options[sel.selectedIndex];
+                originalEmptyTexts[index] = emptyOpt.text;
+                emptyOpt.text = ""; 
+            } else {
+                originalEmptyTexts[index] = null;
+            }
+        });
+        
+        window.print();
+        
+        // Khôi phục lại chữ "-- Trống --" sau khi in xong
+        selects.forEach((sel, index) => {
+            if(originalEmptyTexts[index] !== null) {
+                sel.options[sel.selectedIndex].text = originalEmptyTexts[index];
+            }
+        });
+    }
+
+    // TÍNH NĂNG XUẤT EXCEL MỚI
+    function exportSeatingToExcel() {
+        let wsData = [];
+        let className = document.getElementById('info-lop').value || ".......";
+        let gvcn = document.getElementById('info-gvcn').value || ".......";
+        let phong = document.getElementById('info-phong').value || ".......";
+
+        wsData.push([`SƠ ĐỒ CHỖ NGỒI LỚP ${className}`]);
+        wsData.push([`GVCN: ${gvcn}`, "", "", "", "", "", `Phòng: ${phong}`]);
+        wsData.push([]);
+        
+        let groups = [
+            document.getElementById('group_col_1').options[document.getElementById('group_col_1').selectedIndex].text,
+            document.getElementById('group_col_2').options[document.getElementById('group_col_2').selectedIndex].text,
+            document.getElementById('group_col_3').options[document.getElementById('group_col_3').selectedIndex].text,
+            document.getElementById('group_col_4').options[document.getElementById('group_col_4').selectedIndex].text
+        ];
+        wsData.push([groups[0], "", groups[1], "", groups[2], "", groups[3], ""]);
+        
+        for(let r = 5; r >= 0; r--) {
+            let rowData = [];
+            for(let c = 0; c < 4; c++) {
+                let absId = c * 6 + r;
+                let s1 = document.getElementById(`seat_${absId}_1`);
+                let s2 = document.getElementById(`seat_${absId}_2`);
+                
+                let text1 = (s1 && s1.value !== "") ? s1.options[s1.selectedIndex].text.replace(/👦 |👧 |👤 /, '') : "";
+                let text2 = (s2 && s2.value !== "") ? s2.options[s2.selectedIndex].text.replace(/👦 |👧 |👤 /, '') : "";
+                
+                rowData.push(text1); rowData.push(text2);
+            }
+            wsData.push(rowData);
+            wsData.push(["", "", "", "", "", "", "", ""]); 
+        }
+        
+        wsData.push([]);
+        wsData.push(["", "", "BẢNG ĐEN / MÀN HÌNH TƯƠNG TÁC", "", "", "", "", ""]);
+        
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        ws['!cols'] = [{wch: 18}, {wch: 18}, {wch: 18}, {wch: 18}, {wch: 18}, {wch: 18}, {wch: 18}, {wch: 18}];
+        
+        if(!ws['!merges']) ws['!merges'] = [];
+        ws['!merges'].push({s:{r:0,c:0}, e:{r:0,c:7}}); 
+        ws['!merges'].push({s:{r:1,c:0}, e:{r:1,c:2}}); 
+        ws['!merges'].push({s:{r:1,c:6}, e:{r:1,c:7}}); 
+        for(let i=0; i<4; i++) { ws['!merges'].push({s:{r:3,c:i*2}, e:{r:3,c:i*2+1}}); }
+        ws['!merges'].push({s:{r:17,c:2}, e:{r:17,c:5}}); 
+        
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "SoDoLop");
+        XLSX.writeFile(wb, `So_Do_Lop_${className}.xlsx`);
+    }
+
     function getPunishedStudentsOptions() {
         let opts = `<option value="">-- Chọn HS bị phạt --</option>`; let hasPunish = false;
         studentsData.forEach((s, i) => {
@@ -714,15 +826,12 @@
                 if(isPunished) { opts += `<option value="${i}">🚨 ${s["Họ và Tên"]}</option>`; hasPunish = true; }
             }
         });
-        if(!hasPunish) return `<option value="">(Không có HS bị phạt)</option>`;
-        return opts;
+        if(!hasPunish) return `<option value="">(Không có HS bị phạt)</option>`; return opts;
     }
 
     function getEvalHtmlPast(i, hsIndexStr, currentEval, currentTxt) {
         currentEval = (currentEval && currentEval !== 'Chưa đánh giá') ? currentEval : 'Tốt';
-        let displayTxt = currentEval === 'other' ? 'block' : 'none';
-        let selClass = currentEval === 'Tốt' ? 'good' : 'bad';
-
+        let displayTxt = currentEval === 'other' ? 'block' : 'none'; let selClass = currentEval === 'Tốt' ? 'good' : 'bad';
         return `
             <select id="pw_eval_s${hsIndexStr}_${i}" class="eval-input ${selClass}" onchange="toggleEvalInputPast(${i}, '${hsIndexStr}')" style="margin-top:5px; padding: 6px; font-size: 13px;">
                 <option value="Tốt" ${currentEval === 'Tốt' ? 'selected' : ''}>Tốt</option>
@@ -744,14 +853,10 @@
     }
 
     function deletePastWeek() {
-        let weekDate = document.getElementById('pastWeekSelector').value;
-        if(!weekDate) return;
-        if(!confirm("⚠️ CẢNH BÁO: Bạn có chắc chắn muốn XÓA BỎ HOÀN TOÀN tuần trực này khỏi lịch sử?\n\n(Lưu ý: Nếu bạn đã lỡ Đánh Giá xấu cho học sinh trong tuần này thì các lỗi vi phạm trong sổ vẫn sẽ bị giữ lại. Hành động này chỉ xóa khỏi bảng xem lại lịch sử tuần.)")) return;
-        
-        let history = JSON.parse(localStorage.getItem('DutyHistory_Lop11')) || {};
-        delete history[weekDate];
-        localStorage.setItem('DutyHistory_Lop11', JSON.stringify(history));
-        saveToCloud();
+        let weekDate = document.getElementById('pastWeekSelector').value; if(!weekDate) return;
+        if(!confirm("⚠️ CẢNH BÁO: Bạn có chắc chắn muốn XÓA BỎ HOÀN TOÀN tuần trực này khỏi lịch sử?")) return;
+        let history = JSON.parse(localStorage.getItem('DutyHistory_Lop11')) || {}; delete history[weekDate];
+        localStorage.setItem('DutyHistory_Lop11', JSON.stringify(history)); saveToCloud();
         if (document.getElementById('tab-thongke').classList.contains('active')) renderStatistics();
         checkDutyWarnings(); alert("🗑️ Đã xóa tuần trực khỏi lịch sử!"); openPastWeeksModal(); 
     }
@@ -779,11 +884,9 @@
     }
 
     function loadPastWeek() {
-        let weekDate = document.getElementById('pastWeekSelector').value;
-        if(!weekDate) return;
+        let weekDate = document.getElementById('pastWeekSelector').value; if(!weekDate) return;
         let history = JSON.parse(localStorage.getItem('DutyHistory_Lop11')) || {};
-        let weekData = history[weekDate];
-        let tbody = document.getElementById('pastWeekBody'); let html = '';
+        let weekData = history[weekDate]; let tbody = document.getElementById('pastWeekBody'); let html = '';
         
         weekData.forEach((d, i) => {
             let s1Name = d.hs1 !== "" && d.hs1 !== null && studentsData[d.hs1] ? studentsData[d.hs1]["Họ và Tên"] : "<i style='color:#94a3b8'>Trống</i>";
@@ -804,10 +907,8 @@
     }
 
     function savePastWeekEvals() {
-        let weekDate = document.getElementById('pastWeekSelector').value;
-        if(!weekDate) return;
-        let history = JSON.parse(localStorage.getItem('DutyHistory_Lop11')) || {};
-        let weekData = history[weekDate];
+        let weekDate = document.getElementById('pastWeekSelector').value; if(!weekDate) return;
+        let history = JSON.parse(localStorage.getItem('DutyHistory_Lop11')) || {}; let weekData = history[weekDate];
         let master = JSON.parse(localStorage.getItem('DuLieu_Lop11_Master'));
 
         weekData.forEach((d, i) => {
@@ -820,12 +921,7 @@
                         let pAct = s.logs.xuly.find(a => a.status === 'pending' && (a.title.toLowerCase().includes('lao động') || a.title.toLowerCase().includes('trực lớp')));
                         if (pAct) { pAct.status = 'done'; pAct.dateResolved = d.date; pAct.note = "Đã trực phạt TỐT và hoàn thành nhiệm vụ."; }
                     }
-                    for (let w in history) {
-                        history[w].forEach(day => {
-                            if (day.hs1 == d.hs1 && day.eval1 !== 'Tốt') day.resolved1 = true;
-                            if (day.hs2 == d.hs1 && day.eval2 !== 'Tốt') day.resolved2 = true;
-                        });
-                    }
+                    for (let w in history) { history[w].forEach(day => { if (day.hs1 == d.hs1 && day.eval1 !== 'Tốt') day.resolved1 = true; if (day.hs2 == d.hs1 && day.eval2 !== 'Tốt') day.resolved2 = true; }); }
                 }
             }
             if (d.hs2 !== "") {
@@ -835,20 +931,15 @@
         });
 
         if(weekData.length > 0) weekData[0].isEvaluated = true; 
-        history[weekDate] = weekData;
-        localStorage.setItem('DutyHistory_Lop11', JSON.stringify(history));
-        localStorage.setItem('DuLieu_Lop11_Master', JSON.stringify(master));
+        history[weekDate] = weekData; localStorage.setItem('DutyHistory_Lop11', JSON.stringify(history)); localStorage.setItem('DuLieu_Lop11_Master', JSON.stringify(master));
         saveToCloud(); alert("💾 Đã lưu và Chốt Đánh Giá thành công!"); checkDutyWarnings();
         if (document.getElementById('tab-thongke').classList.contains('active')) renderStatistics();
         openPastWeeksModal(); document.getElementById('pastWeekSelector').value = weekDate; loadPastWeek();
     }
 
     function updateWeekDates() {
-        const picker = document.getElementById('weekPicker');
-        if(!picker.value) return;
-        let d = new Date(picker.value);
-        let day = d.getDay() || 7; 
-        if(day !== 1) d.setDate(d.getDate() - (day - 1)); 
+        const picker = document.getElementById('weekPicker'); if(!picker.value) return;
+        let d = new Date(picker.value); let day = d.getDay() || 7; if(day !== 1) d.setDate(d.getDate() - (day - 1)); 
 
         for(let i=0; i<5; i++) {
             let curD = new Date(d); curD.setDate(curD.getDate() + i);
@@ -864,31 +955,10 @@
         const tbody = document.getElementById('scheduleBody'); let html = '';
         
         days.forEach((day, i) => {
-            let taskHTML = `
-                <div class="task-tags">
-                    <label><input type="checkbox" id="task_${i}_quet" value="Quét lớp" checked><span>Quét lớp</span></label>
-                    <label><input type="checkbox" id="task_${i}_lau" value="Lau bảng" checked><span>Lau bảng</span></label>
-                    <label><input type="checkbox" id="task_${i}_rac" value="Đổ rác" checked><span>Đổ rác</span></label>
-                </div>
-                <input type="text" id="task_other_${i}" class="task-other-input" placeholder="Thêm công việc...">`;
-
-            html += `<tr>
-                    <td id="day_label_${i}" style="color: var(--dark-orange); font-weight:900; line-height: 1.6; font-size: 15px;">${day}</td>
-                    <td>
-                        <select id="duty_group_${i}" class="duty-sel-group" onchange="onDutyGroupChange(${i})">
-                            <option value="Tổ 1">Tổ 1</option><option value="Tổ 2">Tổ 2</option>
-                            <option value="Tổ 3">Tổ 3</option><option value="Tổ 4">Tổ 4</option>
-                            <option value="PHAT" style="color:var(--danger); font-weight:bold;">🚨 Phạt Trực</option>
-                            <option value="KHAC" style="color:var(--purple); font-weight:bold;">🌟 Tự chọn</option>
-                        </select>
-                    </td>
-                    <td><select id="duty_desk_${i}" class="duty-sel-desk" onchange="onDutyDeskChange(${i})"></select></td>
-                    <td><div id="duty_s1_box_${i}" class="student-box">--</div></td>
-                    <td><div id="duty_s2_box_${i}" class="student-box">--</div></td>
-                    <td>${taskHTML}</td></tr>`;
+            let taskHTML = `<div class="task-tags"><label><input type="checkbox" id="task_${i}_quet" value="Quét lớp" checked><span>Quét lớp</span></label><label><input type="checkbox" id="task_${i}_lau" value="Lau bảng" checked><span>Lau bảng</span></label><label><input type="checkbox" id="task_${i}_rac" value="Đổ rác" checked><span>Đổ rác</span></label></div><input type="text" id="task_other_${i}" class="task-other-input" placeholder="Thêm công việc...">`;
+            html += `<tr><td id="day_label_${i}" style="color: var(--dark-orange); font-weight:900; line-height: 1.6; font-size: 15px;">${day}</td><td><select id="duty_group_${i}" class="duty-sel-group" onchange="onDutyGroupChange(${i})"><option value="Tổ 1">Tổ 1</option><option value="Tổ 2">Tổ 2</option><option value="Tổ 3">Tổ 3</option><option value="Tổ 4">Tổ 4</option><option value="PHAT" style="color:var(--danger); font-weight:bold;">🚨 Phạt Trực</option><option value="KHAC" style="color:var(--purple); font-weight:bold;">🌟 Tự chọn</option></select></td><td><select id="duty_desk_${i}" class="duty-sel-desk" onchange="onDutyDeskChange(${i})"></select></td><td><div id="duty_s1_box_${i}" class="student-box">--</div></td><td><div id="duty_s2_box_${i}" class="student-box">--</div></td><td>${taskHTML}</td></tr>`;
         });
-        tbody.innerHTML = html;
-        document.getElementById('weekPicker').valueAsDate = new Date(); updateWeekDates();
+        tbody.innerHTML = html; document.getElementById('weekPicker').valueAsDate = new Date(); updateWeekDates();
     }
 
     function onDutyGroupChange(dayIdx) {
