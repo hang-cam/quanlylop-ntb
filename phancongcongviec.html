@@ -202,7 +202,9 @@
         <table>
             <thead>
                 <tr>
-                    <th style="width: 40px;">Chọn</th>
+                    <th style="width: 40px; text-align: center;">
+                        <input type="checkbox" id="selectAllCbx" checked onchange="toggleSelectAll()" style="cursor:pointer; width:16px; height:16px; accent-color:var(--info);" title="Chọn tất cả">
+                    </th>
                     <th style="width: 40px;">STT</th>
                     <th style="min-width: 150px; text-align: left;">Họ và Tên</th>
                     <th style="width: 70px;">Giới Tính</th>
@@ -223,7 +225,7 @@
         <div class="selected-count">Đã chọn: <span id="countDisplay">0</span> học sinh</div>
         <div class="action-buttons">
             <button class="btn btn-export" onclick="exportSelected()">📊 Xuất File Excel</button>
-            <button class="btn btn-print" onclick="printSelected()">🖨️ In Danh Sách Phân Công </button>
+            <button class="btn btn-print" onclick="printSelected()">🖨️ In Danh Sách Vừa Chọn</button>
             <button class="btn btn-sync" onclick="syncToRecords()">✅ Chốt Phân Công & Lưu</button>
         </div>
     </div>
@@ -495,6 +497,13 @@
         });
     }
 
+    function toggleSelectAll() {
+        const isChecked = document.getElementById('selectAllCbx').checked;
+        const checkboxes = document.querySelectorAll('.student-cbx');
+        checkboxes.forEach(cb => cb.checked = isChecked);
+        updateCount();
+    }
+
     function filterStudents() {
         const mode = document.querySelector('input[name="filterMode"]:checked').value;
         const keyword = document.getElementById('txtKeyword').value.trim().toLowerCase();
@@ -594,13 +603,24 @@
             }).join('');
             
             document.getElementById('actionBar').style.display = 'flex';
+            
+            // Đặt lại nút chọn tất cả thành trạng thái được chọn khi mới lọc xong
+            const selectAllCbx = document.getElementById('selectAllCbx');
+            if(selectAllCbx) selectAllCbx.checked = true;
+            
             updateCount();
         }
     }
 
     function updateCount() {
-        const checkboxes = document.querySelectorAll('.student-cbx:checked');
-        document.getElementById('countDisplay').innerText = checkboxes.length;
+        const checkboxes = document.querySelectorAll('.student-cbx');
+        const checkedBoxes = document.querySelectorAll('.student-cbx:checked');
+        document.getElementById('countDisplay').innerText = checkedBoxes.length;
+        
+        const selectAllCbx = document.getElementById('selectAllCbx');
+        if (selectAllCbx && checkboxes.length > 0) {
+            selectAllCbx.checked = (checkboxes.length === checkedBoxes.length);
+        }
     }
 
     function syncToRecords() {
@@ -622,6 +642,8 @@
 
         checkboxes.forEach(cb => {
             const orgIdx = parseInt(cb.getAttribute('data-original-index'));
+            const listIdx = parseInt(cb.value);
+            
             currentTask.students.push({ orgIdx: orgIdx, present: true, originalText: "" });
             if (!masterData[orgIdx].logs) masterData[orgIdx].logs = { vipham: [], phongtrao: [] };
 
@@ -630,6 +652,18 @@
             if(isLeader) finalTaskName += ` <br><small style="color:var(--dark-orange); font-weight:bold;">Vai trò: Người phụ trách</small>`;
 
             masterData[orgIdx].logs.phongtrao.push({ id: taskId, text: finalTaskName, date: now });
+            
+            // Cập nhật lại list hiện tại để xuất Excel/In không bị lỗi sau khi đã lưu
+            currentFilteredList[listIdx] = masterData[orgIdx];
+
+            // Cập nhật giao diện trực tiếp vào bảng mà không cần tải lại bảng mới
+            const tr = cb.closest('tr');
+            if(tr) {
+                const ptBadge = tr.querySelector('.pt-badge');
+                if(ptBadge) ptBadge.innerText = masterData[orgIdx].logs.phongtrao.length;
+                const noteCell = tr.cells[8];
+                if(noteCell) noteCell.innerHTML = generateNoteHTML(masterData[orgIdx], taskName);
+            }
         });
 
         assignedTasks.unshift(currentTask); 
@@ -637,10 +671,11 @@
         localStorage.setItem('DuLieu_Lop11_Master', JSON.stringify(masterData));
         
         saveToCloud(); 
-        alert(`✅ THÀNH CÔNG! Đã cập nhật hoạt động "${taskName}" cho ${checkboxes.length} học sinh.`);
+        alert(`✅ THÀNH CÔNG! Đã cập nhật hoạt động "${taskName}" cho ${checkboxes.length} học sinh.\nDanh sách vẫn được giữ nguyên để bạn có thể bấm "In Danh Sách" hoặc "Xuất Excel" ngay bây giờ.`);
+        
+        // Gỡ bỏ radio đã chọn để chuẩn bị cho lần phân công tới, nhưng giữ nguyên checkbox
         const leaderRadio = document.querySelector('.leader-radio:checked');
         if(leaderRadio) leaderRadio.checked = false;
-        filterStudents(); 
     }
 
     function exportSelected() {
@@ -699,6 +734,38 @@
         document.getElementById('printContainer').innerHTML = html;
         window.print();
     }
+    
+    function printTaskStudents(taskId) {
+        let assignedTasks = JSON.parse(localStorage.getItem('AssignedTasks_Lop11')) || [];
+        let task = assignedTasks.find(t => t.id === taskId);
+        if(!task) return;
+        
+        let masterData = JSON.parse(localStorage.getItem('DuLieu_Lop11_Master'));
+        let today = new Date().toLocaleDateString('vi-VN');
+        
+        let html = `
+            <div class="print-header"><h2>DANH SÁCH THAM GIA HOẠT ĐỘNG</h2><h3 style="margin-top:5px; font-weight:normal;">Hoạt động: <b>${task.name}</b> &nbsp;&nbsp;|&nbsp;&nbsp; Ngày: <b>${task.date}</b></h3></div>
+            <table class="print-table"><thead><tr><th style="width: 5%;">STT</th><th style="width: 35%; text-align: left; padding-left:15px;">Họ và Tên</th><th style="width: 15%;">Giới Tính</th><th style="width: 25%;">Vai trò / Ghi chú</th><th style="width: 20%;">Điểm danh / Ký nhận</th></tr></thead><tbody>`;
+        
+        let stt = 1;
+        task.students.forEach(s => {
+            let student = masterData[s.orgIdx];
+            if(student) {
+                let roleText = s.originalText && s.originalText.includes('Người phụ trách') ? '<b>Phụ trách</b>' : '';
+                html += `<tr><td><b>${stt++}</b></td><td class="text-left" style="padding-left:15px; font-weight:bold;">${student["Họ và Tên"]}</td><td>${student["Giới Tính"] || ""}</td><td>${roleText}</td><td></td></tr>`;
+            }
+        });
+
+        html += `</tbody></table>
+            <div class="print-sign"><div class="print-sign-box">
+                <p><i>Ngày ${today.split('/')[0]} tháng ${today.split('/')[1]} năm ${today.split('/')[2]}</i></p>
+                <p style="font-weight: bold; margin-top:10px; margin-bottom: 70px;">Giáo viên quản lý</p>
+                <p style="font-size: 18px;">${appConfig.teacherName || "......................................."}</p>
+            </div></div>`;
+
+        document.getElementById('printContainer').innerHTML = html;
+        window.print();
+    }
 
     function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
@@ -717,6 +784,7 @@
                     <div style="display:flex; gap:6px; justify-content:center; flex-wrap: wrap;">
                         <button class="btn" style="padding: 6px 10px; font-size:12px; height:auto; background: var(--info);" onclick="openAttendance('${t.id}')">Điểm Danh</button>
                         <button class="btn" style="padding: 6px 10px; font-size:12px; height:auto; background: var(--success);" onclick="openEditList('${t.id}')">Sửa DS</button>
+                        <button class="btn" style="padding: 6px 10px; font-size:12px; height:auto; background: #64748b;" onclick="printTaskStudents('${t.id}')">🖨️ In DS</button>
                         <button class="btn" style="padding: 6px 10px; font-size:12px; height:auto; background: var(--warning);" onclick="editTaskName('${t.id}')">Sửa Tên</button>
                         <button class="btn" style="padding: 6px 10px; font-size:12px; height:auto; background: var(--danger);" onclick="deleteTask('${t.id}')">Xóa</button>
                     </div>
@@ -746,7 +814,6 @@
         }
     }
     
-    // HÀM MỚI: XÓA TOÀN BỘ LỊCH SỬ PHÂN CÔNG
     function clearAllTasks() {
         if(!confirm("⚠️ CẢNH BÁO: Hành động này sẽ XÓA SẠCH toàn bộ lịch sử phân công công việc từ trước đến nay. Các điểm thưởng/phạt liên quan đến hoạt động của TẤT CẢ học sinh cũng sẽ bị thu hồi.\n\nBạn có chắc chắn muốn dọn dẹp lịch sử?")) return;
         
