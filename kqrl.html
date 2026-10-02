@@ -377,7 +377,7 @@
 
     function logout() { auth.signOut(); }
 
-    function saveToCloud() {
+function saveToCloud() {
         if(!currentUser) return;
         let dataToSave = {};
         const allowedKeys = ['AppConfig_Master', 'DuLieu_Lop11_Master', 'Seating_Lop11', 'SeatingLayout_Lop11', 'DutySchedule_Lop11', 'DutyWeek_Lop11', 'DutyHistory_Lop11', 'DutyPairIndex_Lop11', 'SoDo_Config', 'AssignedTasks_Lop11'];
@@ -387,6 +387,15 @@
                 dataToSave[key] = localStorage.getItem(key);
             }
         }
+        
+        // Chuẩn hóa key lưu trữ đồng bộ với index.html
+        if (localStorage.getItem('AppConfig_Master')) dataToSave['AppConfig'] = localStorage.getItem('AppConfig_Master');
+        if (localStorage.getItem('DuLieu_Lop11_Master')) dataToSave['StudentsData'] = localStorage.getItem('DuLieu_Lop11_Master');
+
+        // Xóa key cũ trên Firebase để tránh rác dữ liệu
+        dataToSave['AppConfig_Master'] = firebase.firestore.FieldValue.delete();
+        dataToSave['DuLieu_Lop11_Master'] = firebase.firestore.FieldValue.delete();
+
         dataToSave.lastUpdated = firebase.firestore.FieldValue.serverTimestamp();
         db.collection("quanlylop_data").doc(currentUser.uid).set(dataToSave, { merge: true }).catch(err => console.error(err));
     }
@@ -395,8 +404,23 @@
         db.collection("quanlylop_data").doc(currentUser.uid).get().then(doc => {
             if (doc.exists) {
                 const data = doc.data();
-                for (let key in data) {
-                    if (key !== 'lastUpdated') localStorage.setItem(key, data[key]);
+                
+                // Kéo dữ liệu bằng key chuẩn của hệ thống
+                let configToSave = data.AppConfig || data.AppConfig_Master;
+                let studentsToSave = data.StudentsData || data.DuLieu_Lop11_Master;
+                
+                if (configToSave) localStorage.setItem('AppConfig_Master', configToSave);
+                if (studentsToSave) localStorage.setItem('DuLieu_Lop11_Master', studentsToSave);
+
+                // Gỡ bỏ các trường cấu hình chính ra khỏi vòng lặp để tránh lỗi
+                delete data.AppConfig; 
+                delete data.StudentsData;
+                delete data.AppConfig_Master; 
+                delete data.DuLieu_Lop11_Master; 
+                delete data.lastUpdated;
+
+                for (let key in data) { 
+                    localStorage.setItem(key, data[key]); 
                 }
             }
             initPageData();
@@ -436,7 +460,7 @@
                     let lowerTxt = txt.toLowerCase();
                     let upperText = txt.toUpperCase();
                     
-                    if (/^CP[\s:\-\(]/i.test(txt) || upperText === 'CP' || lowerTxt.includes('có phép')) {
+                    if (/^CP[\s:\-\(]/i.test(txt) || upperText === 'Có phép' || lowerTxt.includes('có phép')) {
                         let reason = txt;
                         if (/^CP[\s:\-\(]/i.test(txt)) reason = txt.replace(/^CP[\s:\-\(]*/i, '');
                         if (upperText === 'CP') reason = "Không ghi chú";
@@ -818,7 +842,7 @@
                 let ptValue = getActivityPoints(log.text);
                 
                 let isCore = false;
-                if (ptValue >= 3 || ['thể thao', 'hội thao', 'bóng', 'cầu lông', 'kéo co', 'bơi', 'điền kinh'].some(k => log.text.toLowerCase().includes(k))) {
+                if (ptValue >= 3 || ['thể thao', 'hội thao', 'bóng', 'cầu lông', 'kéo co', 'bơi', 'điền kinh','đá cầu'].some(k => log.text.toLowerCase().includes(k))) {
                     isCore = true;
                 }
                 let coreBadge = isCore ? `<span style="background:var(--warning); color:white; padding:2px 6px; border-radius:4px; font-size:10px; margin-left:5px;">Nòng cốt</span>` : "";
