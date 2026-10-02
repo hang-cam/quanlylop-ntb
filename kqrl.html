@@ -344,11 +344,9 @@
     function normalizeVpName(text) {
         let t = text.toLowerCase().trim();
         
-        // Trễ/vắng liên quan đến kiểm tra, thi
         let isExamRelated = ['kttt', 'kthk', 'kiểm tra', 'hk1', 'hk2'].some(kw => t.includes(kw)) || /\bkt\b/.test(t) || /\bthi\b/.test(t);
         if ((t.includes('trễ') || t.includes('vắng') || t.includes('bỏ')) && isExamRelated) return 'trễ/vắng kiểm tra';
         
-        // Đi trễ thông thường
         if (t.includes('trễ') && !t.includes('bài') && !t.includes('đoàn phí')) return 'đi trễ';
         
         if (t.includes('không thuộc') || t.includes('chưa thuộc')) return 'không thuộc bài';
@@ -357,7 +355,6 @@
         if (t.includes('nói chuyện') || t.includes('ồn ào') || t.includes('mất trật tự')) return 'nói chuyện/ồn ào';
         if (t.includes('đồng phục') || t.includes('áo dài') || t.includes('bảng tên') || t.includes('phù hiệu') || t.includes('sơ vin') || t.includes('thể dục') || t.includes('tdtt')) return 'vi phạm đồng phục';
         
-        // Điện thoại
         if (t.includes('điện thoại') || t.includes('đtdđ')) return 'sử dụng điện thoại';
         
         if (t.includes('vệ sinh') || t.includes('xả rác') || t.includes('đổ rác')) return 'vệ sinh/trực nhật';
@@ -427,7 +424,7 @@
         if (rawData) {
             studentsData = JSON.parse(rawData);
             
-            // Auto-Migration
+            // Auto-Migration TỐI ƯU HÓA CÓ PHÉP / KHÔNG PHÉP
             studentsData = studentsData.map(s => {
                 if (!s.logs) s.logs = { vipham: [], phongtrao: [], vangCoPhep: [], vangKhongPhep: [] };
                 if (!s.logs.vangCoPhep) s.logs.vangCoPhep = [];
@@ -436,12 +433,20 @@
                 let newVp = [];
                 s.logs.vipham.forEach(log => {
                     let txt = log.text.trim();
-                    let upper = txt.toUpperCase();
-                    if (/^CP[\s:\-\(]/i.test(txt) || upper === 'CP') {
-                        let reason = txt.replace(/^CP[\s:\-\(]*/i, '').replace(/\)$/, '').trim() || "Không ghi chú";
+                    let lowerTxt = txt.toLowerCase();
+                    let upperText = txt.toUpperCase();
+                    
+                    if (/^CP[\s:\-\(]/i.test(txt) || upperText === 'CP' || lowerTxt.includes('có phép')) {
+                        let reason = txt;
+                        if (/^CP[\s:\-\(]/i.test(txt)) reason = txt.replace(/^CP[\s:\-\(]*/i, '');
+                        if (upperText === 'CP') reason = "Không ghi chú";
+                        reason = reason.replace(/\)$/, '').trim() || "Không ghi chú";
                         s.logs.vangCoPhep.push({ id: log.id, text: reason, date: log.date });
-                    } else if (/^KP[\s:\-\(]/i.test(txt) || upper === 'KP') {
-                        let reason = text.replace(/^KP[\s:\-\(]*/i, '').replace(/\)$/, '').trim() || "Không ghi chú";
+                    } else if (/^KP[\s:\-\(]/i.test(txt) || upperText === 'KP' || lowerTxt.includes('không phép')) {
+                        let reason = txt;
+                        if (/^KP[\s:\-\(]/i.test(txt)) reason = txt.replace(/^KP[\s:\-\(]*/i, '');
+                        if (upperText === 'KP') reason = "Không ghi chú";
+                        reason = reason.replace(/\)$/, '').trim() || "Không ghi chú";
                         s.logs.vangKhongPhep.push({ id: log.id, text: reason, date: log.date });
                     } else {
                         newVp.push(log);
@@ -470,13 +475,13 @@
     // BỘ MÁY XỬ LÝ TỪ KHÓA ĐIỂM THƯỞNG
     function getActivityPoints(text) {
         let txt = text.toLowerCase();
-        let match = txt.match(/\(\+(\d+)(đ|)\)/);
+        let match = txt.match(/\(\+(\d+)(đ\vert{})\)/);
         if (match) return parseInt(match[1]); 
 
         if (['trải nghiệm', 'sử ca', 'kể chuyện', 'bác hồ', 'tiếng hát', 'stem', 'atgt', 'trại', 'lớp trưởng', 'lớp phó', 'bch', 'chi đoàn'].some(k => txt.includes(k))) return 5;
         if (['flashmob'].some(k => txt.includes(k))) return 4;
         if (['dân vũ', 'báo tường', 'thiết kế', 'trang trí', 'phim ngắn', 'tổ trưởng', 'nhất'].some(k => txt.includes(k))) return 3;
-        if (['trực tuyến', 'avatar', 'nhì'].some(k => txt.includes(k))) return 2;
+        if (['trực tuyến', 'avatar', 'nhì', 'thể thao', 'hội thao', 'bóng đá', 'bóng rổ', 'bóng chuyền', 'cầu lông', 'kéo co', 'bơi lội', 'điền kinh'].some(k => txt.includes(k))) return 2;
         
         return 1; 
     }
@@ -525,8 +530,17 @@
         let kpCount = student.logs.vangKhongPhep.length;
 
         let totalBonus = 0;
+        let hasCoreActivity = false;
+
         student.logs.phongtrao.forEach(pt => {
-            totalBonus += getActivityPoints(pt.text);
+            let pts = getActivityPoints(pt.text);
+            totalBonus += pts;
+            
+            let txtLower = pt.text.toLowerCase();
+            // Hoạt động nòng cốt: Từ 3đ trở lên HOẶC Thể thao/Hội thao
+            if (pts >= 3 || ['thể thao', 'hội thao', 'bóng', 'cầu lông', 'kéo co', 'bơi', 'điền kinh'].some(k => txtLower.includes(k))) {
+                hasCoreActivity = true;
+            }
         });
 
         let deductVp = 0; let severeCount = 0; let normalVpCount = 0; let minorVpCount = 0; 
@@ -536,7 +550,7 @@
 
         student.logs.vipham.forEach(log => {
             let txt = log.text.toLowerCase().trim();
-            let normTxt = normalizeVpName(txt); // Sử dụng bộ chuẩn hóa để nhóm lỗi
+            let normTxt = normalizeVpName(txt); 
             vpFreq[normTxt] = (vpFreq[normTxt] || 0) + 1;
             let info = getVpInfo(txt, vpFreq[normTxt]);
             
@@ -552,42 +566,41 @@
             }
         });
 
-        // Điểm trừ chuyên cần (CP -1, KP -2)
         let deductCp = cpCount * 1; 
         let deductKp = kpCount * 2; 
         let totalDeduct = deductVp + deductKp + deductCp;
         
-        // Chỉ những lỗi học tập, kiểm tra và vắng học mới được đưa vào danh sách cho phép bù trừ
         let reducibleErrors = normalVpCount + minorVpCount + specialVpCount + kpCount;
-        
         let errorReduced = 0;
         if (ptCount >= 8) errorReduced = 2; else if (ptCount >= 5) errorReduced = 1;
-
         let actualErrorReduced = Math.min(errorReduced, reducibleErrors);
-
-        // Lỗi lặp lại cố ý và lỗi nghiêm trọng KHÔNG THỂ BÙ TRỪ. Cộng ngược vào bộ đếm khống chế cuối cùng.
         let finalErrors = (reducibleErrors - actualErrorReduced) + repeatedVpCount;
-        totalBonus = Math.max(0, totalBonus - missedPtCount); 
         
-        // BASE SCORE 80
+        totalBonus = Math.max(0, totalBonus - missedPtCount); 
         let finalScore = Math.min(100, 80 - totalDeduct + totalBonus);
 
         let rank = ""; let rankClass = ""; let color = "";
+        let isKhongCheTot = false;
+
+        // KIỂM TRA KHỐNG CHẾ MỨC TỐT
+        if (finalScore >= 85 && finalErrors < 3 && severeCount === 0 && !hasCoreActivity && ptCount > 0) {
+            isKhongCheTot = true;
+        }
         
-        // BỘ QUY TẮC XẾP LOẠI MỚI
         if (severeCount > 0 || finalErrors > 10 || finalScore < 50) { rank = "CHƯA ĐẠT"; rankClass = "rank-chuadat"; color = "var(--danger)"; } 
         else if (finalErrors >= 7 || finalScore < 65) { rank = "ĐẠT"; rankClass = "rank-dat"; color = "var(--warning)"; } 
-        else if (finalErrors >= 3 || finalScore < 85) { rank = "KHÁ"; rankClass = "rank-kha"; color = "var(--info-dark)"; } 
+        else if (finalErrors >= 3 || finalScore < 85 || isKhongCheTot) { rank = "KHÁ"; rankClass = "rank-kha"; color = "var(--info-dark)"; } 
         else { rank = "TỐT"; rankClass = "rank-tot"; color = "var(--success)"; }
 
         let warningHtml = ""; let warningText = "";
         if (severeCount > 0 || finalScore < 50) { warningHtml = '<span class="status-badge status-alert">🚨 Báo Động</span>'; warningText = "Báo động"; } 
-        else if (finalScore < 65 || finalErrors >= 3 || totalDeduct > 4) { warningHtml = '<span class="status-badge status-warning">⚠️ Chú Ý</span>'; warningText = "Cần chú ý"; } 
+        else if (finalScore < 65 || finalErrors >= 3 || totalDeduct > 4 || isKhongCheTot) { warningHtml = '<span class="status-badge status-warning">⚠️ Chú Ý</span>'; warningText = "Cần chú ý"; } 
         else { warningHtml = '<span class="status-badge status-safe">✔️ Ổn Định</span>'; warningText = "Tốt"; }
 
         return {
             base: 80, deduct: totalDeduct, bonus: totalBonus, total: finalScore, rank: rank, rankClass: rankClass, color: color, 
-            severeCount: severeCount, rawErrors: reducibleErrors + repeatedVpCount, errorReduced: errorReduced, actualErrorReduced: actualErrorReduced, finalErrors: finalErrors, warningHtml: warningHtml, warningText: warningText,
+            severeCount: severeCount, rawErrors: reducibleErrors + repeatedVpCount, errorReduced: errorReduced, actualErrorReduced: actualErrorReduced, finalErrors: finalErrors, 
+            warningHtml: warningHtml, warningText: warningText, isKhongCheTot: isKhongCheTot,
             normalVpCount: normalVpCount, minorVpCount: minorVpCount, missedPtCount: missedPtCount, vpCount: student.logs.vipham.length, ptCount: ptCount, cpCount: cpCount, kpCount: kpCount
         };
     }
@@ -605,11 +618,12 @@
         } else {
             let posTxt = "";
             if (scoreObj.ptCount >= 5 && scoreObj.actualErrorReduced > 0) posTxt = `<span style='color:var(--info-dark); font-weight:bold;'>Năng nổ, nhiệt tình tham gia HĐ (${scoreObj.ptCount} lần). Hệ thống đã tiến hành bù trừ và tự động xóa ${scoreObj.actualErrorReduced} lỗi vi phạm thông thường.</span>`;
-            else if (scoreObj.ptCount >= 5) posTxt = `<span style='color:var(--info-dark); font-weight:bold;'>Năng nổ, nhiệt tình tham gia HĐ (${scoreObj.ptCount} lần). Vì không mắc lỗi thông thường, em được bảo lưu toàn bộ điểm cộng thưởng. (Lưu ý: Hệ thống không áp dụng xóa lỗi nếu vi phạm là lỗi nghiêm trọng/lặp lại cố ý).</span>`;
+            else if (scoreObj.ptCount >= 5) posTxt = `<span style='color:var(--info-dark); font-weight:bold;'>Năng nổ, nhiệt tình tham gia HĐ (${scoreObj.ptCount} lần). Vì không mắc lỗi thông thường, em được bảo lưu toàn bộ điểm cộng thưởng.</span>`;
             else if (scoreObj.ptCount > 0) posTxt = `Có tham gia phong trào, hoạt động của lớp (${scoreObj.ptCount} lần).`;
             
             let negTxt = "";
             if (scoreObj.missedPtCount > 0) negTxt = `<span style='color:var(--danger); font-weight:bold;'>Tuy nhiên, em còn thiếu trách nhiệm, chưa hoàn thành ${scoreObj.missedPtCount} nhiệm vụ được phân công.</span>`;
+            if (scoreObj.isKhongCheTot) negTxt += (negTxt ? " " : "") + `<span style='color:var(--dark-orange); font-weight:bold;'>Tuy nhiên, do em chỉ tham gia các hoạt động nhỏ lẻ, chưa đóng góp vào các phong trào nòng cốt của lớp (như Văn nghệ, Hội thao...) nên bị khống chế hạ bậc TỐT.</span>`;
             
             ptTxt = posTxt + (posTxt && negTxt ? " " : "") + negTxt;
             if (!posTxt && negTxt) ptTxt = negTxt + " Cần nghiêm túc chấn chỉnh lại thái độ tham gia hoạt động tập thể.";
@@ -662,12 +676,15 @@
         if (vpRaw.trim()) {
             const vpArray = vpRaw.split(/[,;]+/).map(i => i.trim()).filter(i => i !== "");
             vpArray.forEach(text => { 
-                const upperText = text.toUpperCase();
-                if (/^CP[\s:\-\(]/i.test(text) || upperText === 'CP') {
-                    let reason = text.replace(/^CP[\s:\-\(]*/i, '').replace(/\)$/, '').trim() || "Không ghi chú";
+                let lowerTxt = text.toLowerCase();
+                let upperText = text.toUpperCase();
+                if (/^CP[\s:\-\(]/i.test(text) || upperText === 'CP' || lowerTxt.includes('có phép')) {
+                    let reason = text;
+                    if (/^CP[\s:\-\(]/i.test(text)) reason = text.replace(/^CP[\s:\-\(]*/i, '');                     if (upperText === 'CP') reason = "Không ghi chú";                     reason = reason.replace(/\)$/, '').trim() || "Không ghi chú";
                     studentsData[idx].logs.vangCoPhep.push({ id: Date.now() + Math.random(), text: reason, date: now });
-                } else if (/^KP[\s:\-\(]/i.test(text) || upperText === 'KP') {
-                    let reason = text.replace(/^KP[\s:\-\(]*/i, '').replace(/\)$/, '').trim() || "Không ghi chú";
+                } else if (/^KP[\s:\-\(]/i.test(text) || upperText === 'KP' || lowerTxt.includes('không phép')) {
+                    let reason = text;
+                    if (/^KP[\s:\-\(]/i.test(text)) reason = text.replace(/^KP[\s:\-\(]*/i, '');                     if (upperText === 'KP') reason = "Không ghi chú";                     reason = reason.replace(/\)$/, '').trim() || "Không ghi chú";
                     studentsData[idx].logs.vangKhongPhep.push({ id: Date.now() + Math.random(), text: reason, date: now });
                 } else {
                     studentsData[idx].logs.vipham.push({ id: Date.now() + Math.random(), text: text, date: now }); 
@@ -736,6 +753,7 @@
         const warnText = document.getElementById('rl-severe-warning');
         if (sc.severeCount > 0) { warnText.innerText = "(Bị khống chế hạ bậc do dính Lỗi Nghiêm Trọng)"; warnText.style.display = 'block'; } 
         else if (sc.finalErrors >= 3 && sc.rank !== "TỐT") { warnText.innerText = `(Bị khống chế hạ bậc do vi phạm quá nhiều: ${sc.finalErrors} lỗi chưa bù trừ)`; warnText.style.display = 'block'; } 
+        else if (sc.isKhongCheTot) { warnText.innerText = "(Bị khống chế KHÁ do không tham gia Phong trào nòng cốt/Hội thao)"; warnText.style.display = 'block'; }
         else { warnText.style.display = 'none'; }
 
         document.getElementById('rl-nhanxet').innerHTML = generateTeacherComment(sc);
@@ -798,7 +816,14 @@
             ptHTML += student.logs.phongtrao.map(log => {
                 prPtHTML += `<tr><td class="text-center">${ptIndex++}</td><td>${log.text}</td><td class="text-center">${log.date}</td></tr>`;
                 let ptValue = getActivityPoints(log.text);
-                return `<div class="p-list-item"><div class="p-list-content"><span class="p-icon-check" style="color:var(--info-dark);">🏆</span> <div>${log.text} <b style="color:var(--info-dark);">(+${ptValue}đ)</b><span>(${log.date})</span></div></div><button class="btn-del-item" onclick="deleteLog('phongtrao', ${log.id})" title="Xóa dữ liệu">✕</button></div>`;
+                
+                let isCore = false;
+                if (ptValue >= 3 || ['thể thao', 'hội thao', 'bóng', 'cầu lông', 'kéo co', 'bơi', 'điền kinh'].some(k => log.text.toLowerCase().includes(k))) {
+                    isCore = true;
+                }
+                let coreBadge = isCore ? `<span style="background:var(--warning); color:white; padding:2px 6px; border-radius:4px; font-size:10px; margin-left:5px;">Nòng cốt</span>` : "";
+
+                return `<div class="p-list-item"><div class="p-list-content"><span class="p-icon-check" style="color:var(--info-dark);">🏆</span> <div>${log.text} ${coreBadge} <b style="color:var(--info-dark);">(+${ptValue}đ)</b><span>(${log.date})</span></div></div><button class="btn-del-item" onclick="deleteLog('phongtrao', ${log.id})" title="Xóa dữ liệu">✕</button></div>`;
             }).join('');
         }
         if (sc.missedPtCount > 0) {
